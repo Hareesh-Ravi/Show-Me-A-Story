@@ -11,6 +11,7 @@ booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVP
 month = {June},
 year = {2018}
 }
+[PDF](http://openaccess.thecvf.com/content_cvpr_2018/papers/Ravi_Show_Me_a_CVPR_2018_paper.pdf)
 ```
 
 ## Install Instructions
@@ -18,22 +19,22 @@ year = {2018}
 - For the model 
 
   1. Download dataset from http://visionandlanguage.net/VIST/dataset.html
-  2. Put sis (text) , dii (text) and images folder inside "data/raw/"
-  3. Download glove_6B_300 dim vectors from https://nlp.stanford.edu/projects/glove/ and put it in "data/" folder
+  2. Put sis (text) , dii (text) and images folder inside [./data/raw](./data/raw)
+  3. Download glove_6B_300 dim vectors from https://nlp.stanford.edu/projects/glove/ and put it in [./data/](./data/) folder
   4. pip install -r requirements.txt
 
 - For the coherence vector (Works only in Linux. Let us know if you make it work in Windows)
 
-  4. Download stanford codeNLP parser from https://stanfordnlp.github.io/CoreNLP/
+  4. Download stanford codeNLP parser from https://stanfordnlp.github.io/CoreNLP/ to [root dir](./).
     
      - `unzip "downloaded_file"` in the main folder.
      - `mv "unzipped_folder" stanford-parser`
 
-  5. Download Wordnet3.0.tar.gz from https://wordnet.princeton.edu/download/current-version
+  5. Download Wordnet3.0.tar.gz from https://wordnet.princeton.edu/download/current-version to [root dir](./).
      - `unzip "downloaded file" in main folder where 
      - Follow instructions in INSTALL file in the folder. 
      
-  6. Download and Install Brown Coherence Model (https://bitbucket.org/melsner/browncoherence/src/default/)
+  6. Download and Install Brown Coherence Model (https://bitbucket.org/melsner/browncoherence/src/default/) to [root dir](./)
     
      - `wget https://bitbucket.org/melsner/browncoherence/get/d46d5cd3fc57.zip -O browncoherence.zip`
      - `unzip browncoherence.zip`
