@@ -1,4 +1,4 @@
-# Coherent Neural Story Illustration
+# Coherent Neural Story Illustration (WORK IN PROGRESS)
 This repository has the code to replicate experiments detailed in our paper titles "Show Me a Story: Towards Coherent Neural Story Illustration". This paper addresses the problem of retrieving a sequence of images given a sequence of narrative natural language text. 
 
 
