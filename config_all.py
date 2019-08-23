@@ -11,10 +11,11 @@ import json
 def create_config():
     config = dict()
 
-    config['DEFAULT'] = dict()
-    config['DEFAULT']['train'] = True
-    config['DEFAULT']['test'] = False
-    config['DEFAULT']['CreatedOn'] = time.strftime("%y-%m-%d")
+    config['train'] = True
+    config['test'] = False
+    config['eval'] = False
+    # replace the below date to match trained models for evaluation
+    config['date'] = time.strftime("%y-%m-%d")
 
     # Generalt data and path config
     config['DATALOADER'] = dict()
@@ -44,6 +45,8 @@ def create_config():
     config['MODEL_Sent_Img_PARAMS']['MAX_NB_WORDS'] = 30000
     config['MODEL_Sent_Img_PARAMS']['wd_embd_dim'] = 300
     config['MODEL_Sent_Img_PARAMS']['sent_fea_dim'] = 1024
+    config['MODEL_Sent_Img_PARAMS']['batchsize'] = 128
+    config['MODEL_Sent_Img_PARAMS']['epochs'] = 20
     
     # stage 2
     config['MODEL_Story_ImgSeq_PARAMS'] = dict()
@@ -64,15 +67,12 @@ def create_config():
     config['OUTPUTFILENAMES'] = {}
     config['FILENAMES']['testImgOutFeatSaveName'] = ('./data/testing/'
                                                      + 'test200_sents_fea_lstm.pickle')
-    config['FILENAMES']['NSImodelname'] = ('./TrainedModels/'
-                                           + time.strftime("%y-%m-%d")
-                                           + '_nsi.h5')
-    config['FILENAMES']['CNSImodelname'] = ('./TrainedModels/'
-                                            + time.strftime("%y-%m-%d")
-                                            + '_cnsi.h5')
-    config['FILENAMES']['baseline'] = ('./TrainedModels/'
-                                            + time.strftime("%y-%m-%d")
-                                            + '_baseline.h5')
+    config['FILENAMES']['NSImodelname'] = ('./TrainedModels/' +
+                                           'nsi_' + config['date'] + 'h5')
+    config['FILENAMES']['CNSImodelname'] = ('./TrainedModels/' + 
+                                            'cnsi_' + config['date'] + 'h5')
+    config['FILENAMES']['baseline'] = ('./TrainedModels/' + 
+                                       'baseline_' + config['date'] + '.h5')
 
     with open('config' + config['DEFAULT']['CreatedOn'] + '.json', 
               'w') as configfile:

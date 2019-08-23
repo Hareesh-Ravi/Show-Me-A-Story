@@ -16,13 +16,15 @@ import utils_vist
 def get_sents_imgs(imgID_set, imgFea_set, sents_set):
     sents = []
     imgs = []
+    ids = []
     for i, imgIDs in enumerate(imgID_set):
         for ind in range(5):
             imgID = str(imgIDs[ind])
             img_fea = imgFea_set[imgID]
             sents.append(sents_set[i][ind])
             imgs.append(img_fea)
-    return sents, imgs
+            ids.append(int(imgID))
+    return sents, imgs, ids
 
 
 # load train, val and test data of stories, images and embedding matrix
@@ -80,14 +82,17 @@ def loadData(config):
     testNum = len(test_imgID)*5
 
     # get image features and text sentences in a single list
-    train_sents, train_img_feats = get_sents_imgs(train_imgID,
-                                                  img_fea_train, train_sents)
+    train_sents, train_img_feats, trainids = get_sents_imgs(train_imgID,
+                                                            img_fea_train, 
+                                                            train_sents)
 
-    valid_sents, valid_img_feats = get_sents_imgs(valid_imgID, img_fea_valid,
-                                                  valid_sents)
+    valid_sents, valid_img_feats, valids = get_sents_imgs(valid_imgID, 
+                                                          img_fea_valid,
+                                                          valid_sents)
 
-    test_sents, test_img_feats = get_sents_imgs(test_imgID, img_fea_test,
-                                                test_sents)
+    test_sents, test_img_feats, testids = get_sents_imgs(test_imgID, 
+                                                         img_fea_test,
+                                                         test_sents)
     
     # get all text in single list to process them together
     sents = train_sents + valid_sents + test_sents
@@ -103,7 +108,7 @@ def loadData(config):
     # get train data
     train_sents = data_sents[0:trainNum]
     train_img_feats = pad_sequences(train_img_feats, img_fea_dim)
-    train_data = [train_sents, train_img_feats]
+    train_data = [train_sents, train_img_feats, trainids]
     
     # check some samples
     train_text = train_data[0]
@@ -114,12 +119,12 @@ def loadData(config):
     # get val data
     valid_sents = data_sents[trainNum:(trainNum+validNum)]
     valid_img_feats = pad_sequences(valid_img_feats, img_fea_dim)
-    valid_data = [valid_sents, valid_img_feats]
+    valid_data = [valid_sents, valid_img_feats, valids]
 
     # get test data
     test_sents = data_sents[(trainNum+validNum):(trainNum+validNum+testNum)]
     test_img_feats = pad_sequences(test_img_feats, img_fea_dim)
-    test_data = [test_sents, test_img_feats]
+    test_data = [test_sents, test_img_feats, testids]
 
     print('Preparing embedding matrix.')
     # prepare embedding matrix
