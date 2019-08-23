@@ -7,7 +7,7 @@ Created on Fri Nov 3 09:40:05 2017
 
 from pycorenlp import StanfordCoreNLP
 import utils_vist
-from coherennce_vector import entity_score
+from coherence_vector import entity_score
 import numpy as np
 nlp = StanfordCoreNLP('http://localhost:9000')
 
