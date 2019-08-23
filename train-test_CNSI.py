@@ -16,7 +16,7 @@ import math
 import pickle
 import configparser
 import config_all
-import modelArch
+import model
 
 
 def orderEmb_loss(y_true, y_pred):
@@ -84,7 +84,7 @@ def get_sent_img_feats(config, data, num_words, embedding_matrix):
     # Load Sentence encoder and initialize it's weights
     model_path = sys.argv[1]
     print('model:{}'.format(model_path))
-    SentEncoder = modelArch.Model_Sent_Img(num_words, embedding_matrix)
+    SentEncoder = model.Model_Sent_Img(num_words, embedding_matrix)
     SentEncoder.load_weights(model_path, by_name=True)
 
     # Extract Sent and Img features using sent encoder
@@ -127,7 +127,7 @@ def train(config, train_data, num_words, embedding_matrix):
     train_image = csvnumread(trainImgFileName)
 
     # Load Story Encoder model architecture
-    StoryEncoder = modelArch.Model_Story_ImgSeq_CNSI()
+    StoryEncoder = model.Model_Story_ImgSeq()
 
     x_train, y_train = get_sent_img_feats(train_data, num_words,
                                           embedding_matrix)
@@ -223,10 +223,7 @@ if __name__ == '__main__':
     num_words, embedding_matrix, train_data, valid_data, test_data = loadData(
             config)
 
-    booltrain = config['DEFAULT']['booltrain']
-    booltest = config['DEFAULT']['booltest']
-
-    if booltrain:
+    if config['train']:
         train(config, train_data, num_words, embedding_matrix)
-    if booltest:
+    if config['test']:
         test(config, test_data, num_words, embedding_matrix)

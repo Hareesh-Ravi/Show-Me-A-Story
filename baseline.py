@@ -241,8 +241,8 @@ def train(params):
     average_time_per_epoch = (time.time() - start_time) / epochs
 
     results.append((history, average_time_per_epoch))
-    model.save('baseline_' + params['date'] + '.h5')
-    return model, test_data, 
+    model.save('baseline_' + params['general']['date'] + '.h5')
+    return model
  
 def test(params):
     
@@ -252,7 +252,8 @@ def test(params):
     
     test_batch = len(test_data[0])
     model_test = net_arch(num_words, embedding_matrix)
-    model_test.load_weights('baseline_' + params['date'] + '.h5', by_name=True)
+    model_test.load_weights('baseline_' + params['general']['date'] + 
+                            '.h5', by_name=True)
     [loss1, rec1] = model_test.predict(test_data,  batch_size=test_batch)
     print('predict res: loss:{} recall@1:{}'.format(np.mean(loss1), 
                                                     np.mean(rec1)))
@@ -267,14 +268,20 @@ def evaluate(params):
 
 if __name__ == "__main__":
     
-    params = create_config()
-    print ('parsed parameters:')
-    print (json.dumps(params, indent=2))
-    init(params)
-    if params['train']:
+    try:
+        params = json.load(open('config.json'))
+    except FileNotFoundError:
+        params = create_config()
+    assert params['model'] == 'baseline'
+    print('general config:')
+    print (json.dumps(params['general'], indent=2))
+    print('model parameters:')
+    print (json.dumps(params['stage1'], indent=2))
+    init(params['stage1'])
+    if params['general']['train']:
         train(params)
-    if params['test']:
+    if params['general']['test']:
         test(params)
-    if params['eval']:
+    if params['general']['eval']:
         evaluate(params)
     

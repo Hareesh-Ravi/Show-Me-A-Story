@@ -36,3 +36,16 @@ def write2csv(filename, data):
         writer = csv.writer(f)
         writer.writerows(data)
 
+# get list of all sentences and corresponding image features 
+def flatten_all(imgID_set, imgFea_set, sents_set):
+    sents = []
+    imgs = []
+    ids = []
+    for i, imgIDs in enumerate(imgID_set):
+        for ind in range(5):
+            imgID = str(imgIDs[ind])
+            img_fea = imgFea_set[imgID]
+            sents.append(sents_set[i][ind])
+            imgs.append(img_fea)
+            ids.append(int(imgID))
+    return sents, imgs, ids

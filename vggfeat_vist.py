@@ -4,10 +4,8 @@ Created on Wed Jul 26 15:18:19 2017
 
 @author: HareeshRavi
 """
-import csv
 from keras.applications.vgg16 import VGG16
 import json
-import pickle
 import numpy as np
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -16,6 +14,7 @@ from keras.applications.vgg16 import preprocess_input
 from keras.preprocessing import image
 from keras.models import Model
 import utils_vist
+import config_all
 
 # Function to extract final FC layer features from VGG 16
 def ExtractFeat(model, imgname, image_size):
@@ -73,8 +72,8 @@ def main_func(datadir, process, model, isprune):
     
     print('processing {0:s} data'.format(process))
     # Load story to imageids csv file
-    imageids = utils_vist.getImgIds(datadir + process + '/VISTImage' + 
-                          process + 'Data.csv')  
+    imageids = utils_vist.getImgIds(datadir + process + '/' + 
+                                    process + 'imageids.csv')  
 
     # image2path file
     imagepath = datadir + 'raw/images/' + process + '/'
@@ -94,25 +93,30 @@ def main_func(datadir, process, model, isprune):
             del imageids[index]
         
         # do same for text stories as well 
-        stories = utils_vist.getSent(datadir + process + '/VISTText' + 
-                          process + 'Data.csv')
+        stories = utils_vist.getSent(datadir + process + '/' + 
+                                     process + '_stories.csv')
         
         for index in indexes:
             del stories[index]  
         
         # save deleted imageids and stories as CSV for further use
         utils_vist.write2csv(datadir + process + "/" + process + "_image.csv", 
-                        imageids)
+                             imageids)
         utils_vist.write2csv(datadir + process + "/" + process + "_text.csv",
-                        stories)
+                             stories)
         
     return img_feats, story_noimg
 
 
 if __name__ == '__main__':
     #organize "Story in sequence" of VIST dataset as story x sequence
+    
+    try:
+        config = json.load(open('config.json'))
+    except FileNotFoundError:
+        config = config_all.create_config()
         
-    datadir = './data/'
+    datadir = config['datadir']
     process = ['test', 'val', 'train']
     isprune = True
     
@@ -128,11 +132,11 @@ if __name__ == '__main__':
     for proc in process:
         img_feats, storynoimg = main_func(datadir, proc, model, isprune)
     
-        with open(datadir + proc + '/VIST_ImageFeat' + 
-                  proc + '.json', 'w') as JITE:
+        with open(datadir + proc + '/' + 
+                  proc + '_imgfeat.json', 'w') as JITE:
             json.dump(img_feats, JITE)
-        with open(datadir + proc + '/VIST_StoryNoImg_' + 
-                  proc + '.json', 'w') as JITE:
+        with open(datadir + proc + '/' + 
+                  proc + '_missingstory.json', 'w') as JITE:
             json.dump(storynoimg, JITE)
         
         

@@ -152,13 +152,19 @@ def Model_Story_ImgSeq(config):
 
     return model_CNSI
 
-
-if __name__ == '__main__':
-
-    num_words, embedding_matrix, train_data, valid_data, test_data = loadData()
-
-    config_all()
-
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    print('config created. Call specififc function to load appropriate models')
+#
+#if __name__ == '__main__':
+#    
+#    try:
+#        config = json.load(open('config.json'))
+#    except FileNotFoundError:
+#        config = config_all.create_config()
+#        
+#    num_words, embedding_matrix, train_data, valid_data, test_data = loadData(
+#            config)
+#
+#    config_all()
+#
+#    config = configparser.ConfigParser()
+#    config.read('config.ini')
+#    print('config created. Call specififc function to load appropriate models')

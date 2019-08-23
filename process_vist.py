@@ -9,6 +9,7 @@ import json
 import csv
 import os
 import utils_vist
+import config_all
 
 # process annotations dict to get image ids and text for stories
 # This gives two "No.Of.Stories x 5" sized matrices - one having text and
@@ -55,9 +56,9 @@ def sis_2_csv(data, process, savedir):
         pass
     
     # save files
-    utils_vist.write2csv(filename + ("/VISTImage" + process + "Data.csv"), 
+    utils_vist.write2csv(filename + ("/" + process + "_imageids.csv"), 
                          TotImageData)
-    utils_vist.write2csv(filename + ("/VISTText" + process + "Data.csv"), 
+    utils_vist.write2csv(filename + ("/" + process + "_stories.csv"), 
                          TotTextData)
         
     return TotImageData, TotTextData
@@ -74,7 +75,8 @@ def dii_2_json(data, process, savedir):
         storyTempId = data[i][0]["photo_flickr_id"]
     
         if storyTempId in caption_data:
-            caption_data[storyTempId] = caption_data[storyTempId] + [data[i][0]["text"]]
+            caption_data[storyTempId] = (caption_data[storyTempId] + 
+                                         [data[i][0]["text"]])
         else:
             caption_data[storyTempId] = [data[i][0]["text"]]
         
@@ -87,13 +89,17 @@ def dii_2_json(data, process, savedir):
     except FileExistsError:
         pass
     
-    with open(filename + '/VIST_' + process + '_caption.json','w') as file:
+    with open(filename + '/' + process + '_captions.json','w') as file:
         json.dump(caption_data,file)
 
 if __name__ == '__main__':
     
-    datadir = './data/raw/'
-    savedir = './data/'
+    try:
+        config = json.load(open('config.json'))
+    except FileNotFoundError:
+        config = config_all.create_config()
+    datadir = config['datadir'] + 'raw/'
+    savedir = config['datadir']
     
     #organize "Story in sequence" of VIST dataset as story x sequence
 
@@ -104,7 +110,7 @@ if __name__ == '__main__':
         data = json.loads(json_data)
         annotations = data["annotations"]
         
-        imagedata, textdata = sis_2_csv(annotations, proc, savedir)
+        imagedata, textdata = sis_2_csv(annotations, proc, savedir, config)
     
     # Organize description in isolation for VIST dataset
      
@@ -115,7 +121,7 @@ if __name__ == '__main__':
         
         annotations = data["annotations"]
         
-        capdata = dii_2_json(annotations, proc, savedir)
+        capdata = dii_2_json(annotations, proc, savedir, config)
     
         
 

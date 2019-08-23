@@ -12,36 +12,13 @@ from keras.preprocessing.sequence import pad_sequences
 import config_all
 import utils_vist
 
-# get list of all sentences and corresponding image features 
-def get_sents_imgs(imgID_set, imgFea_set, sents_set):
-    sents = []
-    imgs = []
-    ids = []
-    for i, imgIDs in enumerate(imgID_set):
-        for ind in range(5):
-            imgID = str(imgIDs[ind])
-            img_fea = imgFea_set[imgID]
-            sents.append(sents_set[i][ind])
-            imgs.append(img_fea)
-            ids.append(int(imgID))
-    return sents, imgs, ids
-
-
 # load train, val and test data of stories, images and embedding matrix
 def loadData(config):
     
-    dataconfig = config['DATALOADER']
-    
-    trainimgidfile = dataconfig['trainImgId']
-    testimgidfile = dataconfig['testImgId']
-    valimgidfile = dataconfig['valImgId']
-    trainimgFeatfile = dataconfig['trainImgFeat']
-    testimgFeatfile = dataconfig['testImgFeat']
-    valimgFeatfile = dataconfig['valImgFeat']
-    trainTextSeqfile = dataconfig['trainTextSeq']
-    testTextSeqfile = dataconfig['testTextSeq']
-    valTextSeqfile = dataconfig['valTextSeq']
-    glovetext = dataconfig['glovetext']
+    traindir = config['datadir'] + 'train/'
+    testdir = config['datadir'] + 'test/'
+    valdir = config['datadir'] + 'val/'
+    glovetext = config['glovetext']
     
     MAX_SEQUENCE_LENGTH = config['MODEL_Sent_Img_PARAMS'][
             'MAX_SEQUENCE_LENGTH']
@@ -50,19 +27,19 @@ def loadData(config):
     MAX_NB_WORDS = config['MODEL_Sent_Img_PARAMS']['MAX_NB_WORDS']
 
     # load img feat files
-    img_fea_train = json.loads(open(trainimgFeatfile).read())
-    img_fea_valid = json.loads(open(valimgFeatfile).read())
-    img_fea_test = json.loads(open(testimgFeatfile).read())
+    img_fea_train = json.loads(open(traindir + 'train_imgfeat.json').read())
+    img_fea_valid = json.loads(open(valdir + 'val_imgfeat.json').read())
+    img_fea_test = json.loads(open(testdir + 'test_imgfeat.json').read())
 
     # get img IDs
-    train_imgID = utils_vist.getImgIds(trainimgidfile)
-    valid_imgID = utils_vist.getImgIds(valimgidfile)
-    test_imgID = utils_vist.getImgIds(testimgidfile)
+    train_imgID = utils_vist.getImgIds(traindir + 'train_image.csv')
+    valid_imgID = utils_vist.getImgIds(valdir + 'val_image.csv')
+    test_imgID = utils_vist.getImgIds(testdir + 'test_image.csv')
 
     # get stories
-    train_sents = utils_vist.getSent(trainTextSeqfile)
-    valid_sents = utils_vist.getSent(valTextSeqfile)
-    test_sents = utils_vist.getSent(testTextSeqfile)
+    train_sents = utils_vist.getSent(traindir + 'train_text.csv')
+    valid_sents = utils_vist.getSent(valdir + 'val_text.csv')
+    test_sents = utils_vist.getSent(testdir + 'test_text.csv')
     
     print('loaded all files..')
     # get word vectors from glove
@@ -82,17 +59,14 @@ def loadData(config):
     testNum = len(test_imgID)*5
 
     # get image features and text sentences in a single list
-    train_sents, train_img_feats, trainids = get_sents_imgs(train_imgID,
-                                                            img_fea_train, 
-                                                            train_sents)
+    train_sents, train_img_feats, trainids = utils_vist.flatten_all(
+            train_imgID, img_fea_train, train_sents)
 
-    valid_sents, valid_img_feats, valids = get_sents_imgs(valid_imgID, 
-                                                          img_fea_valid,
-                                                          valid_sents)
+    valid_sents, valid_img_feats, valids = utils_vist.flatten_all(
+            valid_imgID, img_fea_valid, valid_sents)
 
-    test_sents, test_img_feats, testids = get_sents_imgs(test_imgID, 
-                                                         img_fea_test,
-                                                         test_sents)
+    test_sents, test_img_feats, testids = utils_vist.flatten_all(
+            test_imgID, img_fea_test, test_sents)
     
     # get all text in single list to process them together
     sents = train_sents + valid_sents + test_sents
@@ -117,18 +91,19 @@ def loadData(config):
     print(np.shape(train_imgs[0]))
     
     # get val data
-    valid_sents = data_sents[trainNum:(trainNum+validNum)]
+    valid_sents = data_sents[trainNum:(trainNum + validNum)]
     valid_img_feats = pad_sequences(valid_img_feats, img_fea_dim)
     valid_data = [valid_sents, valid_img_feats, valids]
 
     # get test data
-    test_sents = data_sents[(trainNum+validNum):(trainNum+validNum+testNum)]
+    test_sents = data_sents[(trainNum + validNum):(trainNum + 
+                            validNum + testNum)]
     test_img_feats = pad_sequences(test_img_feats, img_fea_dim)
     test_data = [test_sents, test_img_feats, testids]
 
     print('Preparing embedding matrix.')
     # prepare embedding matrix
-    num_words = min(MAX_NB_WORDS, len(word_index)+1)
+    num_words = min(MAX_NB_WORDS, len(word_index) + 1)
     embedding_matrix = np.zeros((num_words, EMBEDDING_DIM))
     for word, i in word_index.items():
         if i >= MAX_NB_WORDS:
