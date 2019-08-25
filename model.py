@@ -68,17 +68,67 @@ def orderEmb_loss(y_true, y_pred):
     return tot_cost / 32
 
 
-def Model_Sent_Img(config, num_words, embedding_matrix):
+def baseline(config, num_words, embedding_matrix):
+    
+    # read config
+    MAX_SEQUENCE_LENGTH = modconfig['maxseqlen']
+    word_embd_dim = modconfig['wd_embd_dim']
+    sent_feat_dim = modconfig['sent_fea_dim']
+    img_feat_dim = modconfig['img_fea_dim']
+    embedding_layer = Embedding(num_words,
+                                word_embd_dim,
+                                weights=[embedding_matrix],
+                                input_length=MAX_SEQUENCE_LENGTH,
+                                trainable=False)
+
+    input_sent = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32', 
+                       name='input1')
+    input_img = Input(shape=(img_feat_dim,), dtype='float32', name='input2')
+
+    # Encode sentence
+    # This embedding layer will encode the input sequence
+    # into a sequence of dense 512-dimensional vectors.
+    x1 = embedding_layer(input_sent)
+
+    # using GRU instead of LSTM
+    Encode_sent = keras.layers.recurrent.GRU(sent_feat_dim, name='gru')(x1)
+    
+    Encode_sent_normed = keras.layers.Lambda(lambda x: K.abs(K.l2_normalize(
+            x, axis=1)), name='sentFeaNorm')(Encode_sent)
+    
+    # encoding image feat
+    Encode_img = Dense(sent_feat_dim, activation='linear', 
+                       name='imgEncode')(input_img)
+    Encode_img_normed = keras.layers.Lambda(lambda x: K.abs(K.l2_normalize(
+            x, axis=1)), name='imgFeaNorm')(Encode_img)
+    
+    # define a Lambda merge layer
+    main_output = keras.layers.merge([Encode_sent_normed, Encode_img_normed], 
+                                     mode=contrastive_loss,
+                                     output_shape=edis_outputshape, 
+                                     name='orderEmbd')
+
+    acc_output = keras.layers.merge([Encode_sent_normed, Encode_img_normed],
+                                    mode=retriv_acc,
+                                    output_shape=edis_outputshape, 
+                                    name='Recall_1')
+
+    model = Model(inputs=[input_sent, input_img], outputs=[main_output, 
+                  acc_output])
+    return model
+
+# stage 1 of proposed model
+def stage1(config, num_words, embedding_matrix):
 
     modconfig = config['MODEL_Sent_Img_PARAMS']
     # read config
     MAX_SEQUENCE_LENGTH = modconfig['maxseqlen']
-    wd_embd_dim = modconfig['wd_embd_dim']
-    sent_fea_dim = modconfig['sent_fea_dim']
-    img_fea_dim = modconfig['img_fea_dim']
+    word_embed_dim = modconfig['wd_embd_dim']
+    sent_feat_dim = modconfig['sent_fea_dim']
+    img_feat_dim = modconfig['img_fea_dim']
 
     embedding_layer = Embedding(num_words,
-                                wd_embd_dim,
+                                word_embed_dim,
                                 weights=[embedding_matrix],
                                 input_length=MAX_SEQUENCE_LENGTH,
                                 name='vist_wd_embedding_layer',
@@ -90,14 +140,14 @@ def Model_Sent_Img(config, num_words, embedding_matrix):
     x1 = embedding_layer(input_sent)
 
     # encoding each sentence GRU over words
-    Encode_sent = keras.layers.recurrent.GRU(sent_fea_dim, name='gru')(x1)
+    Encode_sent = keras.layers.recurrent.GRU(sent_feat_dim, name='gru')(x1)
     Encode_sent_normed = keras.layers.Lambda(lambda x: K.abs(
             K.l2_normalize(x, axis=1)), name='sentFeaNorm')(Encode_sent)
 
-    input_img = Input(shape=(img_fea_dim,), dtype='float32', name='input2')
+    input_img = Input(shape=(img_feat_dim,), dtype='float32', name='input2')
 
     # encoding image feat
-    Encode_img = Dense(sent_fea_dim, activation='linear',
+    Encode_img = Dense(sent_feat_dim, activation='linear',
                        name='imgEncode')(input_img)
     Encode_img_normed = keras.layers.Lambda(lambda x: K.abs(
             K.l2_normalize(x, axis=1)), name='imgFeaNorm')(Encode_img)
@@ -106,7 +156,8 @@ def Model_Sent_Img(config, num_words, embedding_matrix):
             Encode_sent_normed, Encode_img_normed])
     return model1
 
-def Model_Story_ImgSeq(config):
+# stage 2 of proposed model
+def stage2(config):
     
     # read config
     modconfig = config['MODEL_Story_ImgSeq_PARAMS']
