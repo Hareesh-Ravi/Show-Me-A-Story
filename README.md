@@ -26,16 +26,16 @@ year = {2018}
 
 - For the coherence vector (Works only in Linux. Let us know if you make it work in Windows)
 
-  4. Download stanford codeNLP parser from https://stanfordnlp.github.io/CoreNLP/ to [root dir](./).
+  1. Download stanford codeNLP parser from https://stanfordnlp.github.io/CoreNLP/ to [root dir](./).
     
      - `unzip "downloaded_file"` in the main folder.
      - `mv "unzipped_folder" stanford-parser`
 
-  5. Download Wordnet3.0.tar.gz from https://wordnet.princeton.edu/download/current-version to [root dir](./).
+  2. Download Wordnet3.0.tar.gz from https://wordnet.princeton.edu/download/current-version to [root dir](.).
      - `unzip "downloaded file" in main folder where 
      - Follow instructions in INSTALL file in the folder. 
      
-  6. Download and Install Brown Coherence Model (https://bitbucket.org/melsner/browncoherence/src/default/) to [root dir](./)
+  3. Download and Install Brown Coherence Model (https://bitbucket.org/melsner/browncoherence/src/default/) to [root dir](.)
     
      - `wget https://bitbucket.org/melsner/browncoherence/get/d46d5cd3fc57.zip -O browncoherence.zip`
      - `unzip browncoherence.zip`
