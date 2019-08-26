@@ -12,6 +12,7 @@ def create_config():
     config = dict()
     
     config['general'] = dict()
+    config['general']['pretrain'] = True
     config['general']['train'] = True
     config['general']['test'] = False
     config['general']['eval'] = False
@@ -25,8 +26,7 @@ def create_config():
     config['glovetext'] = './data/glove.6B.300d.txt'
     config['testsamples'] = ('./data/testing/test_samples.txt')
     config['savepred'] = ('./data/testing/test_samples_prediction.pickle')
-    config['savemodel'] = ('./TrainedModels/' + config['model'] + '_' +
-                           config['date'] + '.h5')
+    config['savemodel'] = './TrainedModels/'
     
     # stage 1 (or baseline) parameters
     config['stage1'] = dict()

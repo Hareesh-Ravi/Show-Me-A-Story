@@ -128,7 +128,8 @@ def train(params):
     average_time_per_epoch = (time.time() - start_time) / epochs
 
     results.append((history, average_time_per_epoch))
-    model_base.save('baseline_' + params['general']['date'] + '.h5')
+    model_base.save(params['savemodel'] + 'baseline_' + 
+                    params['general']['date'] + '.h5')
     return model_base
  
 def test(params):

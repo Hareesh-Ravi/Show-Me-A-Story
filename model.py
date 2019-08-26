@@ -34,8 +34,7 @@ def contrastive_loss(s_im):
     s2 = K.expand_dims(s,1)
     im2 = K.expand_dims(im,0)
 
-    errors = K.sum(K.pow(K.maximum(0.0, s2 - im2), 2), axis=2)
-    	
+    errors = K.sum(K.pow(K.maximum(0.0, s2 - im2), 2), axis=2)    	
     diagonal = tf.diag_part(errors)
     
     # all constrastive image for each sentence
@@ -222,12 +221,17 @@ def stage1(config, num_words, embedding_matrix):
     Encode_img_normed = keras.layers.Lambda(lambda x: K.abs(
             K.l2_normalize(x, axis=1)), name='imgFeaNorm')(Encode_img)
 
-    model1 = Model(inputs=[input_sent, input_img], outputs=[
+    sentence_model = Model(inputs=[input_sent, input_img], outputs=[
             Encode_sent_normed, Encode_img_normed])
-    return model1
+    
+    sentence_model.compile(loss=['mean_absolute_error', MyCustomLoss], 
+                           optimizer='adam', 
+                           loss_weights=[1,0])
+    sentence_model.summary()
+    return sentence_model
 
 # stage 2 of proposed model
-def stage2(config):
+def stage2(config, num_words, embedding_matrix):
     
     # read config
     modconfig = config['MODEL_Story_ImgSeq_PARAMS']
@@ -258,18 +262,19 @@ def stage2(config):
         # final dense layer
         td11 = TimeDistributed(Dense(y_dim), name='layer_4_timedist')(m1)
         # final model
-        model_CNSI = Model(inputs=[i11, i21], outputs=td11)
+        story_model = Model(inputs=[i11, i21], outputs=td11)
     else:
         # final dense layer
         td11 = TimeDistributed(Dense(y_dim), name='layer_4_timedist')(g13)
         # final model
-        model_CNSI = Model(inputs=i11, outputs=td11)
+        story_model = Model(inputs=i11, outputs=td11)
     
 
     # order embedding loss
-    model_CNSI.compile(loss=orderEmb_loss, optimizer=opt, metrics=['accuracy'])
+    story_model.compile(loss=orderEmb_loss, optimizer=opt, 
+                        metrics=['accuracy'])
 
-    model_CNSI.summary()
+    story_model.summary()
 
-    return model_CNSI
+    return story_model
 

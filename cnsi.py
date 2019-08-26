@@ -7,8 +7,7 @@ Created on Thu Aug 14 13:28:09 2018
 
 import numpy as np
 import keras
-from load_VIST_data_seq import loadData
-import sys
+from load_data import loadData
 import math
 import pickle
 import json
@@ -17,13 +16,14 @@ import model
 import utils_vist
 import time
 
-
-def get_sent_img_feats(config, data, num_words, embedding_matrix):
+# get sentence vectors using stage 1 of trained network
+def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
 
     # Load Sentence encoder and initialize it's weights
-    model_path = sys.argv[1]
+    model_path = (config['savemodel'] + 'stage1_' + 
+                  config['general']['date'] + '.h5')
     print('model:{}'.format(model_path))
-    SentEncoder = model.Model_Sent_Img(num_words, embedding_matrix)
+    SentEncoder = model.stage1(num_words, embedding_matrix)
     SentEncoder.load_weights(model_path, by_name=True)
 
     # Extract Sent and Img features using sent encoder
@@ -54,17 +54,15 @@ def pretrain(config, train_data, valid_data, num_words, embedding_matrix):
     
     return True
 
+# stage 1 of the proposed network training
 def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
     
     batchsize = config['stage1']['batchsize']
     epochs = config['stage1']['epochs']
     MAX_SEQUENCE_LENGTH = config['stage1']['MAX_SEQUENCE_LENGTH']
     img_fea_dim = config['stage1']['img_fea_dim']
-    
-    # load all data
-    print('Loading data')
-    num_words, embedding_matrix, train_data, valid_data, test_data = loadData()
-    
+    modelname = (config['savemodel'] + 'stage1_' + config['general']['date'] + 
+                 '.h5')
 
     print('no of total train samples: {0:d}'.format(len(train_data[0])))
     print('no of total val samples: {0:d}'.format(len(valid_data[0])))
@@ -86,13 +84,10 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
     valid_data[1] = valid_data[1][0:valid_num]
     
     # load model architecture
-    model_base = model.baseline(num_words, embedding_matrix)
-    model_base.compile(loss=['mean_absolute_error', model.MyCustomLoss], 
-                       optimizer='adam', 
-                       loss_weights=[1,0])
-    model_base.summary()
+    SentenceEncoder = model.baseline(config, num_words, embedding_matrix)
+    SentenceEncoder.load_weights(modelname, by_name=True)
 
-    filepath = "./tmp/weights-improvement-{epoch:02d}.h5"
+    filepath = "./tmp/stage1-weights-{epoch:02d}.h5"
     checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
                                                    monitor='val_loss', 
                                                    verbose=0,
@@ -156,41 +151,65 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
             p[sampled_arr] = -1
             
         train_input = [xtrain, ytrain]
-        history = model_base.fit(train_input, train_label,
-                                 validation_data = (valid_data, valid_label), 
-                                 batch_size=batchsize, 
-                                 verbose=1, 
-                                 callbacks=[checkpointer])
+        history = SentenceEncoder.fit(train_input, train_label,
+                                      validation_data = (valid_data, 
+                                                         valid_label), 
+                                      batch_size=batchsize, 
+                                      verbose=1, 
+                                      callbacks=[checkpointer])
+        print("epoch: {} completed".format(i))
 
     average_time_per_epoch = (time.time() - start_time) / epochs
-
+    print("avg time per epoch: {}".format(average_time_per_epoch))
     results.append((history, average_time_per_epoch))
-    model_base.save('baseline_' + params['general']['date'] + '.h5')
-    return model_base
+    SentenceEncoder.save(modelname)
+    return SentenceEncoder
 
-def trainstage2(config, train_data, num_words, embedding_matrix):
+# stage 2 of the proposed network training
+def trainstage2(config, train_data, valid_data, num_words, embedding_matrix):
 
     traindir = config['general']['datadir'] + 'train/'
     epochs = config['stage2']['epochs']
     BS = config['stage2']['batchsize']
-    CNSImodelname = config['savemodel']
+    modelname = (config['savemodel'] + 'stage2_' + 
+                 config['general']['date'] + '.h5')
 
     coh_sent_train = np.expand_dims(np.load(traindir + 
-                                                 'cohvec_train.npy'), axis=1)
+                                            'cohvec_train.npy'), axis=1)
     
     # load train image IDs
     train_image = utils_vist.getImgIds(traindir + 'train_image.csv')
 
     # Load Story Encoder model architecture
-    StoryEncoder = model.Model_Story_ImgSeq()
-
-    x_train, y_train = get_sent_img_feats(train_data, num_words,
-                                          embedding_matrix)
+    StoryEncoder = model.stage2(config, num_words, embedding_matrix)
+    StoryEncoder.summary()
+    
+    filepath = "./tmp/stage2-weights-{epoch:02d}.h5"
+    checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
+                                                   monitor='val_loss', 
+                                                   verbose=0,
+                                                   save_best_only=False, 
+                                                   save_weights_only=False, 
+                                                   mode='auto', 
+                                                   period=1)
+    
+    # get sentence vectors for training and validation data
+    x_train, y_train = get_sent_img_feats_stage1(train_data, num_words,
+                                                 embedding_matrix)
+    
+    x_val, y_val = get_sent_img_feats_stage1(train_data, num_words,
+                                             embedding_matrix)
 
     NumTrain = math.floor(np.size(x_train, 0)/BS) * BS
     x_train = np.array(x_train[0:NumTrain][:][:])
     y_train = np.array(y_train[0:NumTrain][:][:])
-
+    
+    NumVal = math.floor(np.size(x_val, 0)/BS) * BS
+    x_val = np.array(x_val[0:NumVal][:][:])
+    y_val = np.array(y_val[0:NumVal][:][:])
+    
+    start_time = time.time()
+    results = []
     # Custom shuffle and train
     for i in range(0, epochs):
         tempIDS = np.array(list(train_image))
@@ -235,39 +254,48 @@ def trainstage2(config, train_data, num_words, embedding_matrix):
             tempIDS[sampled_arr, 0] = -1
             p[sampled_arr] = -1
 
-        StoryEncoder.fit([x_train1, coh_train], y_train1, epochs=1,
-                         batch_size=BS, verbose=1)
-        print("epoch: ", i, " completed")
+        history = StoryEncoder.fit([x_train1, coh_train], y_train1, 
+                                   validation_data = (x_val, y_val), epochs=1,
+                                   batch_size=BS, verbose=1, 
+                                   callbacks=[checkpointer])
+        print("epoch: {} completed".format(i))
+    
+    average_time_per_epoch = (time.time() - start_time) / epochs
+    print("avg time per epoch: {}".format(average_time_per_epoch))
+    results.append((history, average_time_per_epoch))
 
-    StoryEncoder.save(CNSImodelname)
+    StoryEncoder.save(modelname)
+    return StoryEncoder
 
 
 def test(config, test_data, num_words, embedding_matrix):
 
-    CohVecTestFileName = config['DATALOADER']['CohVecTest']
-    testinsamplename = config['DATALOADER']['testSamplesFileName']
-    CNSImodelname = config['OUTPUTFILENAMES']['CNSImodelname']
-    testoutfeatname = config['OUTPUTFILENAMES']['testImgOutFeatSaveName']
+    testdir = config['general']['datadir'] + 'test/'
+    testinsamplename = config['testsamples']
+    modelname = (config['savemodel'] + 'stage2_' + 
+                 config['general']['date'] + '.h5')
+    predictions = config['savepred']
 
-    x_test, y_test = get_sent_img_feats(test_data, num_words,
-                                        embedding_matrix)
-    test200_lines = [line.rstrip('\n') for line in open(testinsamplename)]
-    coh_sent_test = np.expand_dims(np.load(CohVecTestFileName), axis=1)
+    x_test, y_test = get_sent_img_feats_stage1(test_data, num_words,
+                                               embedding_matrix)
+    test_lines = [line.rstrip('\n') for line in open(testinsamplename)]
+    coh_sent_test = np.expand_dims(np.load(testdir + 'cohvec_test.npy'), 
+                                   axis=1)
 
     sent_test200 = []
-    for ind in test200_lines:
+    for ind in test_lines:
         ind = int(ind)
         sent_test200.append(x_test[0][ind])
-    sent_test200 = np.array(sent_test200)
-    sub_test200_coh = coh_sent_test[test200_lines, :, :]
-    sub_test200_coh = np.repeat(sub_test200_coh, 5, axis=1)
+    sent_test = np.array(sent_test200)
+    sub_test_coh = coh_sent_test[test_lines, :, :]
+    sub_test_coh = np.repeat(sub_test_coh, 5, axis=1)
 
-    model_lstm = keras.models.load_model(
-            CNSImodelname,
+    trained_model = keras.models.load_model(
+            modelname,
             custom_objects={'orderEmb_loss': model.orderEmb_loss})
 
-    out_fea = model_lstm.predict([sent_test200, sub_test200_coh])
-    with open(testoutfeatname, 'wb') as fp:
+    out_fea = trained_model.predict([sent_test, sub_test_coh])
+    with open(predictions, 'wb') as fp:
         pickle.dump(out_fea, fp)
 
 
