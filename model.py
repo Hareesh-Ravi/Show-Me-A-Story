@@ -13,11 +13,130 @@ from keras.layers import Input, concatenate
 from keras import optimizers
 from keras import backend as K
 import tensorflow as tf
-import configparser
-import config_all
-from load_VIST_data_seq import loadData
 
 
+def order_violations(s, im):
+    
+    # Computes the order violations (Equation 2 in the paper)
+    return K.pow(K.maximum(0.0, s - im), 2)
+
+# contrastive loss used as part of the baseline network
+def contrastive_loss(s_im):
+    
+    margin = 0.005
+    
+    # For a minibatch of sentence and image embeddings, 
+    # compute the pairwise contrastive loss
+    s = s_im[0]
+    im = s_im[1]
+
+    # create two tensor 1xnumxdim  numx1xdim
+    s2 = K.expand_dims(s,1)
+    im2 = K.expand_dims(im,0)
+
+    errors = K.sum(K.pow(K.maximum(0.0, s2 - im2), 2), axis=2)
+    	
+    diagonal = tf.diag_part(errors)
+    
+    # all constrastive image for each sentence
+    cost_s = K.maximum(0.0, margin - errors + diagonal) 
+    
+    # all contrastive sentences for each image
+    cost_im = K.maximum(0.0, margin - errors + K.reshape(diagonal,[-1, 1]))  
+
+    cost_tot = cost_s + cost_im
+
+    cost_tot = tf.matrix_set_diag(cost_tot, tf.zeros(batchsize))
+
+    return K.sum(cost_tot)
+
+# this is one-to-one retrieval accuracy used for pretraining stage 1
+def retriv_acc(s_im):
+    
+    # For a minibatch of sentence and image embeddings, 
+    # compute the retrieval accuracy
+    s = s_im[0]
+    im = s_im[1]
+    print(np.shape(s),np.shape(im))
+    s2 = K.expand_dims(s, 1)
+    im2 = K.expand_dims(im, 0)
+    errors = K.sum(order_violations(s2, im2), axis=2)
+
+
+    inds = K.argmin(errors,axis=1)
+    inds = tf.cast(inds,tf.int32)
+    inds_true = tf.range(batchsize)
+    elements_equal_to_value = tf.equal(inds, inds_true)
+    as_ints = tf.cast(elements_equal_to_value, tf.int32)
+    results = tf.reduce_sum(as_ints)
+    results = tf.cast(results,tf.float32)
+
+    return results
+
+# for baseline
+def edis_outputshape(input_shape):
+    shape = list(input_shape)
+    assert len(shape)==2
+    outshape = (shape[0][0],1)
+    return tuple(outshape)
+
+# fpor baseline and stage1
+def MyCustomLoss(yTure, yPred):
+    return yPred
+
+
+# network architecture for baseline experiment
+def baseline(config, num_words, embedding_matrix):
+    
+    # read config
+    modconfig = config['MODEL_Sent_Img_PARAMS']
+    MAX_SEQUENCE_LENGTH = modconfig['maxseqlen']
+    word_embd_dim = modconfig['wd_embd_dim']
+    sent_feat_dim = modconfig['sent_fea_dim']
+    img_feat_dim = modconfig['img_fea_dim']
+    embedding_layer = Embedding(num_words,
+                                word_embd_dim,
+                                weights=[embedding_matrix],
+                                input_length=MAX_SEQUENCE_LENGTH,
+                                trainable=False)
+
+    input_sent = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32', 
+                       name='input1')
+    input_img = Input(shape=(img_feat_dim,), dtype='float32', name='input2')
+
+    # Encode sentence
+    # This embedding layer will encode the input sequence
+    # into a sequence of dense 512-dimensional vectors.
+    x1 = embedding_layer(input_sent)
+
+    # using GRU instead of LSTM
+    Encode_sent = keras.layers.recurrent.GRU(sent_feat_dim, name='gru')(x1)
+    
+    Encode_sent_normed = keras.layers.Lambda(lambda x: K.abs(K.l2_normalize(
+            x, axis=1)), name='sentFeaNorm')(Encode_sent)
+    
+    # encoding image feat
+    Encode_img = Dense(sent_feat_dim, activation='linear', 
+                       name='imgEncode')(input_img)
+    Encode_img_normed = keras.layers.Lambda(lambda x: K.abs(K.l2_normalize(
+            x, axis=1)), name='imgFeaNorm')(Encode_img)
+    
+    # define a Lambda merge layer
+    main_output = keras.layers.merge([Encode_sent_normed, Encode_img_normed], 
+                                     mode=contrastive_loss,
+                                     output_shape=edis_outputshape, 
+                                     name='orderEmbd')
+
+    acc_output = keras.layers.merge([Encode_sent_normed, Encode_img_normed],
+                                    mode=retriv_acc,
+                                    output_shape=edis_outputshape, 
+                                    name='Recall_1')
+
+    model = Model(inputs=[input_sent, input_img], outputs=[main_output, 
+                  acc_output])
+    return model
+
+# sequential order embedding loss function
 def orderEmb_loss(y_true, y_pred):
     y_true = K.l2_normalize(K.abs(y_true), axis=2)
     y_pred = K.l2_normalize(K.abs(y_pred), axis=2)
@@ -67,55 +186,6 @@ def orderEmb_loss(y_true, y_pred):
     # print(tot_cost)
     return tot_cost / 32
 
-
-def baseline(config, num_words, embedding_matrix):
-    
-    # read config
-    MAX_SEQUENCE_LENGTH = modconfig['maxseqlen']
-    word_embd_dim = modconfig['wd_embd_dim']
-    sent_feat_dim = modconfig['sent_fea_dim']
-    img_feat_dim = modconfig['img_fea_dim']
-    embedding_layer = Embedding(num_words,
-                                word_embd_dim,
-                                weights=[embedding_matrix],
-                                input_length=MAX_SEQUENCE_LENGTH,
-                                trainable=False)
-
-    input_sent = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32', 
-                       name='input1')
-    input_img = Input(shape=(img_feat_dim,), dtype='float32', name='input2')
-
-    # Encode sentence
-    # This embedding layer will encode the input sequence
-    # into a sequence of dense 512-dimensional vectors.
-    x1 = embedding_layer(input_sent)
-
-    # using GRU instead of LSTM
-    Encode_sent = keras.layers.recurrent.GRU(sent_feat_dim, name='gru')(x1)
-    
-    Encode_sent_normed = keras.layers.Lambda(lambda x: K.abs(K.l2_normalize(
-            x, axis=1)), name='sentFeaNorm')(Encode_sent)
-    
-    # encoding image feat
-    Encode_img = Dense(sent_feat_dim, activation='linear', 
-                       name='imgEncode')(input_img)
-    Encode_img_normed = keras.layers.Lambda(lambda x: K.abs(K.l2_normalize(
-            x, axis=1)), name='imgFeaNorm')(Encode_img)
-    
-    # define a Lambda merge layer
-    main_output = keras.layers.merge([Encode_sent_normed, Encode_img_normed], 
-                                     mode=contrastive_loss,
-                                     output_shape=edis_outputshape, 
-                                     name='orderEmbd')
-
-    acc_output = keras.layers.merge([Encode_sent_normed, Encode_img_normed],
-                                    mode=retriv_acc,
-                                    output_shape=edis_outputshape, 
-                                    name='Recall_1')
-
-    model = Model(inputs=[input_sent, input_img], outputs=[main_output, 
-                  acc_output])
-    return model
 
 # stage 1 of proposed model
 def stage1(config, num_words, embedding_matrix):
@@ -203,19 +273,3 @@ def stage2(config):
 
     return model_CNSI
 
-#
-#if __name__ == '__main__':
-#    
-#    try:
-#        config = json.load(open('config.json'))
-#    except FileNotFoundError:
-#        config = config_all.create_config()
-#        
-#    num_words, embedding_matrix, train_data, valid_data, test_data = loadData(
-#            config)
-#
-#    config_all()
-#
-#    config = configparser.ConfigParser()
-#    config.read('config.ini')
-#    print('config created. Call specififc function to load appropriate models')
