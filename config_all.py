@@ -11,22 +11,32 @@ import json
 def create_config():
     config = dict()
     
-    config['general'] = dict()
-    config['general']['pretrain'] = True
-    config['general']['train'] = True
-    config['general']['test'] = False
-    config['general']['eval'] = False
+    config['pretrain'] = True
+    config['train'] = True
+    config['test'] = False
+    config['eval'] = False
     # model can be 'nsi', 'cnsi' or 'baseline'
-    config['general']['model'] = 'cnsi'
+    config['model'] = 'cnsi'
     # replace the below date to match trained models for evaluation
-    config['general']['date'] = time.strftime("%y-%m-%d")
-    config['general']['datadir'] = './data/'
+    config['date'] = time.strftime("%y-%m-%d")
+    config['datadir'] = './data/'
 
     # filenames
     config['glovetext'] = './data/glove.6B.300d.txt'
     config['testsamples'] = ('./data/testing/test_samples.txt')
     config['savepred'] = ('./data/testing/test_samples_prediction.pickle')
     config['savemodel'] = './TrainedModels/'
+    
+    # Pretraining stage 1 (or baseline) parameters
+    config['pretrain'] = dict()
+    config['pretrain']['MAX_SEQUENCE_LENGTH'] = 100
+    config['pretrain']['img_fea_dim'] = 4096
+    config['pretrain']['MAX_NB_WORDS'] = 30000
+    config['pretrain']['wd_embd_dim'] = 300
+    config['pretrain']['embedding_dim'] = 1024
+    config['pretrain']['batchsize'] = 1
+    config['pretrain']['epochs'] = 15
+    config['pretrain']['word_count_threshold'] = 1
     
     # stage 1 (or baseline) parameters
     config['stage1'] = dict()
