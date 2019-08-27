@@ -92,12 +92,9 @@ def dii_2_json(data, process, savedir):
     with open(filename + '/' + process + '_captions.json','w') as file:
         json.dump(caption_data,file)
 
-if __name__ == '__main__':
+
+def main(config):
     
-    try:
-        config = json.load(open('config.json'))
-    except FileNotFoundError:
-        config = config_all.create_config()
     datadir = config['datadir'] + 'raw/'
     savedir = config['datadir']
     
@@ -122,6 +119,15 @@ if __name__ == '__main__':
         annotations = data["annotations"]
         
         capdata = dii_2_json(annotations, proc, savedir, config)
+    return imagedata, textdata, capdata
+    
+if __name__ == '__main__':
+    
+    try:
+        config = json.load(open('config.json'))
+    except FileNotFoundError:
+        config = config_all.create_config()
+    main(config)
     
         
 

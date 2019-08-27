@@ -38,7 +38,7 @@ def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
     labels_temp = []
     feat = []
     labels = []
-    for i in range(0, len(train_data[0]), num_sents):
+    for i in range(0, len(data[0]), num_sents):
         for j in range(0, num_sents):
             ind = i + j
             sent = encoded_sents[ind]
@@ -53,7 +53,9 @@ def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
     return feat, labels
 
 # preprocessing for pretraining model
-def preProBuildWordVocab(sentence_iterator, word_count_threshold):
+def preProBuildWordVocab(config, sentence_iterator, word_count_threshold):
+    max_features = config['pretrain']['MAX_NB_WORDS']
+    wd_embd_dim = config['pretrain']['wd_embd_dim']
     print('Indexing word vectors.')
     embeddings_index = {}
     f = open(os.path.join('./glove.6B', 'glove.6B.300d.txt'))
@@ -81,7 +83,8 @@ def preProBuildWordVocab(sentence_iterator, word_count_threshold):
                                                       time.time() - t0))
 
     ixtoword = {}
-    ixtoword[0] = '.'  # period at the end of the sentence. make first dimension be end token
+    # period at the end of the sentence. make first dimension be end token
+    ixtoword[0] = '.'  
     wordtoix = {}
     wordtoix['#START#'] = 0 # make first vector be the start token
     print('Preparing embedding matrix.')
@@ -99,10 +102,7 @@ def preProBuildWordVocab(sentence_iterator, word_count_threshold):
       # prepare embedding matrix
 
     word_counts['.'] = nsents
-    #bias_init_vector = np.array([1.0*word_counts[ixtoword[i]] for i in ixtoword])
-    #bias_init_vector /= np.sum(bias_init_vector) # normalize to frequencies
-    #bias_init_vector = np.log(bias_init_vector)
-    #bias_init_vector -= np.max(bias_init_vector) # shift to nice numeric range
+
     return wordtoix, embedding_matrix, num_words
 
 # pretraining model on coco dataset. This is mostly a keras implementation of 
@@ -236,8 +236,8 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
     epochs = config['stage1']['epochs']
     MAX_SEQUENCE_LENGTH = config['stage1']['MAX_SEQUENCE_LENGTH']
     img_fea_dim = config['stage1']['img_fea_dim']
-    modelname = (config['savemodel'] + 'stage1_' + config['general']['date'] + 
-                 '.h5')
+    modelname = (config['savemodel'] + 'stage1_' +  
+                 config['date'] + '.h5')
 
     print('no of total train samples: {0:d}'.format(len(train_data[0])))
     print('no of total val samples: {0:d}'.format(len(valid_data[0])))
@@ -260,13 +260,14 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
     
     # load model architecture
     SentenceEncoder = model.baseline(config, num_words, embedding_matrix)
-    if config['pretrain']:
+    try:
         SentenceEncoder.load_weights((config['savemodel'] + 
                                       'stage1_pretrain_' + 
                                       config['general']['date'] + '.h5'), 
                                      by_name=True)
-    else:
-        pass
+    except:
+        # continue training even without pretrained model
+        print('stage 1 pretrained model does not exist. check!!!')
 
     filepath = "./tmp/stage1-weights-{epoch:02d}.h5"
     checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
@@ -347,15 +348,17 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
     return SentenceEncoder
 
 # stage 2 of the proposed network training
-def trainstage2(config, train_data, valid_data, num_words, embedding_matrix):
+def trainstage2(config, train_data, valid_data, num_words, embedding_matrix, 
+                modeltype='cnsi'):
 
     traindir = config['datadir'] + 'train/'
     valdir = config['datadir'] + 'val/'
     epochs = config['stage2']['epochs']
     BS = config['stage2']['batchsize']
-    modelname = (config['savemodel'] + 'stage2_' + 
+    cohfeatdim = config['stage2']['cohfeat_dim']
+    modelname = (config['savemodel'] + 'stage2_' + modeltype + '_' +  
                  config['date'] + '.h5')
-    modeltype = config['model']
+
     if modeltype == 'cnsi':
         coh_sent_train = np.expand_dims(np.load(traindir + 
                                                 'cohvec_train.npy'), axis=1)
@@ -379,10 +382,10 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix):
                                                    period=1)
     
     # get sentence vectors for training and validation data
-    x_train, y_train = get_sent_img_feats_stage1(train_data, num_words,
+    x_train, y_train = get_sent_img_feats_stage1(config, train_data, num_words,
                                                  embedding_matrix)
     
-    x_val, y_val = get_sent_img_feats_stage1(train_data, num_words,
+    x_val, y_val = get_sent_img_feats_stage1(config, train_data, num_words,
                                              embedding_matrix)
 
     NumTrain = math.floor(np.size(x_train, 0)/BS) * BS
@@ -403,7 +406,7 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix):
             tempvalcoh = coh_sent_val[0:NumVal, :]
             tempvalcoh = np.repeat(tempvalcoh, 5, axis=1)
             tempCoh = coh_sent_train[0:NumTrain, :]
-            coh_train = np.zeros((NumTrain, 5, 64))
+            coh_train = np.zeros((NumTrain, 5, cohfeatdim))
             tempCoh = np.repeat(tempCoh, 5, axis=1)
 
         iterations = math.floor(np.size(tempIDS, 0) / BS)
@@ -466,7 +469,8 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix):
     return StoryEncoder
 
 
-def test(config, modelname, test_data, num_words, embedding_matrix):
+def test(config, modelname, test_data, num_words, embedding_matrix, 
+         modeltype='cnsi'):
 
     testdir = config['datadir'] + 'test/'
     testinsamplename = config['testsamples']
@@ -475,27 +479,61 @@ def test(config, modelname, test_data, num_words, embedding_matrix):
     x_test, y_test = get_sent_img_feats_stage1(test_data, num_words,
                                                embedding_matrix)
     test_lines = [line.rstrip('\n') for line in open(testinsamplename)]
-    coh_sent_test = np.expand_dims(np.load(testdir + 'cohvec_test.npy'), 
-                                   axis=1)
+    if modeltype == 'cnsi':
+        coh_sent_test = np.expand_dims(np.load(testdir + 'cohvec_test.npy'), 
+                                       axis=1)
 
     sent_test200 = []
     for ind in test_lines:
         ind = int(ind)
         sent_test200.append(x_test[0][ind])
     sent_test = np.array(sent_test200)
-    sub_test_coh = coh_sent_test[test_lines, :, :]
-    sub_test_coh = np.repeat(sub_test_coh, 5, axis=1)
+    if modeltype == 'cnsi':
+        sub_test_coh = coh_sent_test[test_lines, :, :]
+        sub_test_coh = np.repeat(sub_test_coh, 5, axis=1)
 
     trained_model = keras.models.load_model(
             modelname,
             custom_objects={'orderEmb_loss': model.orderEmb_loss})
-
-    out_fea = trained_model.predict([sent_test, sub_test_coh])
+    if modeltype == 'cnsi':
+        out_fea = trained_model.predict([sent_test, sub_test_coh])
+    else:
+        out_fea = trained_model.predict(sent_test)
     with open(predictions, 'wb') as fp:
         pickle.dump(out_fea, fp)
     
     return True
 
+
+def main(config, process, modeltype='cnsi', model2test=None):
+    
+    print('model name..:')
+    print(modeltype)
+    print('general config..:')
+    print (json.dumps(config['general'], indent=2))
+    print('stage 1 model parameters..:')
+    print (json.dumps(config['stage1'], indent=2))
+    print('stage 2 model parameters..:')
+    print (json.dumps(config['stage2'], indent=2))
+    
+    print('loading data..')
+    num_words, embedding_matrix, train_data, valid_data, test_data = loadData(
+            config)
+    
+    if process == 'pretrain':
+        pretrain(config['stage1'], train_data, num_words, 
+                 embedding_matrix)
+    if process == 'trainstage1':
+        trainstage1(config['stage1'], train_data, num_words, 
+                    embedding_matrix)
+    if process == 'trainstage2':
+        trainstage2(config['stage2'], train_data, num_words, 
+                    embedding_matrix, modeltype)
+    if process == 'test':
+        test(config, model2test, test_data, num_words, embedding_matrix, 
+             modeltype)
+    
+    return True
 
 if __name__ == '__main__':
 
@@ -503,31 +541,5 @@ if __name__ == '__main__':
         params = json.load(open('config.json'))
     except FileNotFoundError:
         params = create_config()
-    print('model name:')
-    print(params['model'])
-    if (params['model'] == 'nsi') and (
-            params['stage2']['cohfeat_dim'] is not None):
-        raise ValueError('For NSI model, make cohfeat_dim as None')
-    print('general config:')
-    print (json.dumps(params['general'], indent=2))
-    print('stage 1 model parameters:')
-    print (json.dumps(params['stage1'], indent=2))
-    print('stage 2 model parameters:')
-    print (json.dumps(params['stage2'], indent=2))
-
-    num_words, embedding_matrix, train_data, valid_data, test_data = loadData(
-            params)
     
-    if params['pretrain']:
-        premodel = pretrain(params['stage1'], train_data, num_words, 
-                            embedding_matrix)
-    if params['train']:
-        
-        stage1_model = trainstage1(params['stage1'], train_data, num_words, 
-                                   embedding_matrix)
-
-        stage2_model = trainstage2(params['stage2'], train_data, num_words, 
-                                   embedding_matrix)
-    if params['test']:
-        model2test =  params['savemodel'] + 'stage2_' + params['date'] + '.h5'
-        test(params, model2test, test_data, num_words, embedding_matrix)
+    main(params, 'train')

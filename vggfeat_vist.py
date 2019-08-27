@@ -77,7 +77,7 @@ def main_func(datadir, process, model, isprune):
 
     # image2path file
     imagepath = datadir + 'raw/images/' + process + '/'
-    
+    image_size = (224, 224)
     starttime = time.time()
     #Extract features for each unique image for training, testing and validation
     img_feats, story_noimg = Feat_forArray(imageids, imagepath, model, 
@@ -108,14 +108,8 @@ def main_func(datadir, process, model, isprune):
     return img_feats, story_noimg
 
 
-if __name__ == '__main__':
-    #organize "Story in sequence" of VIST dataset as story x sequence
+def main(config):
     
-    try:
-        config = json.load(open('config.json'))
-    except FileNotFoundError:
-        config = config_all.create_config()
-        
     datadir = config['datadir']
     process = ['test', 'val', 'train']
     isprune = True
@@ -126,8 +120,7 @@ if __name__ == '__main__':
     model = Model(input=base_model.input, 
                   output=base_model.get_layer('fc2').output)
     model.summary()
-    image_size = (224, 224)
-    
+        
     print('loaded VGG model...')
     for proc in process:
         img_feats, storynoimg = main_func(datadir, proc, model, isprune)
@@ -138,6 +131,19 @@ if __name__ == '__main__':
         with open(datadir + proc + '/' + 
                   proc + '_missingstory.json', 'w') as JITE:
             json.dump(storynoimg, JITE)
+    return True
+
+if __name__ == '__main__':
+    #organize "Story in sequence" of VIST dataset as story x sequence
+    
+    try:
+        config = json.load(open('config.json'))
+    except FileNotFoundError:
+        config = config_all.create_config()
+    
+    main(config)
+        
+    
         
         
     

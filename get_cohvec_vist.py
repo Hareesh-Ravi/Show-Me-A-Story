@@ -34,7 +34,7 @@ def get_parse_tree(data):
            
     return tree
 
-if __name__ == '__main__':
+def main(config):
     
     datadir = './data/'
     process = ['train', 'val', 'test']
@@ -61,3 +61,7 @@ if __name__ == '__main__':
         # save entity feature as numpy file
         np.save(datadir + proc + '/cohvec_' + proc + '.npy', 
                 cohvec)
+    
+if __name__ == '__main__':
+    
+    main()

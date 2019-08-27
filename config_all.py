@@ -11,10 +11,6 @@ import json
 def create_config():
     config = dict()
     
-    config['pretrain'] = True
-    config['train'] = True
-    config['test'] = False
-    config['eval'] = False
     # model can be 'nsi', 'cnsi' or 'baseline'
     config['model'] = 'cnsi'
     # replace the below date to match trained models for evaluation

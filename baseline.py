@@ -125,7 +125,7 @@ def train(params, num_words, embedding_matrix, train_data, valid_data):
 
     results.append((history, average_time_per_epoch))
     model_base.save(params['savemodel'] + 'baseline_' + 
-                    params['general']['date'] + '.h5')
+                    params['date'] + '.h5')
     return model_base
  
 def test(params, num_words, embedding_matrix, test_data):
@@ -133,7 +133,7 @@ def test(params, num_words, embedding_matrix, test_data):
     # load all data    
     test_batch = len(test_data[0])
     model_test = model.baseline(num_words, embedding_matrix)
-    model_test.load_weights('baseline_' + params['general']['date'] + 
+    model_test.load_weights('baseline_' + params['date'] + 
                             '.h5', by_name=True)
     [loss1, rec1] = model_test.predict(test_data,  batch_size=test_batch)
     print('predict res: loss:{} recall@1:{}'.format(np.mean(loss1), 
@@ -147,6 +147,28 @@ def evaluate(params):
     return True
 
 
+def main(config, process):
+    
+    # load all data
+    print('Loading data')
+    num_words, embedding_matrix, train_data, valid_data, test_data = loadData(
+            config)
+    
+    assert config['model'] == 'baseline'
+    print('config:')
+    print (json.dumps(config, indent=2))
+
+    init(config['stage1'])
+    if process == 'train':
+        train(config, num_words, embedding_matrix, train_data, valid_data)
+    if process == 'test':
+        test(config, num_words, embedding_matrix, test_data)
+    if process == 'eval':
+        evaluate(config)
+        
+    return True
+
+
 if __name__ == "__main__":
     
     try:
@@ -154,20 +176,5 @@ if __name__ == "__main__":
     except FileNotFoundError:
         params = create_config()
         
-    # load all data
-    print('Loading data')
-    num_words, embedding_matrix, train_data, valid_data, test_data = loadData()
-    
-    assert params['model'] == 'baseline'
-    print('general config:')
-    print (json.dumps(params['general'], indent=2))
-    print('model parameters:')
-    print (json.dumps(params['stage1'], indent=2))
-    init(params['stage1'])
-    if params['general']['train']:
-        train(params, num_words, embedding_matrix, train_data, valid_data)
-    if params['general']['test']:
-        test(params, num_words, embedding_matrix, test_data)
-    if params['general']['eval']:
-        evaluate(params)
+    main(params)
     
