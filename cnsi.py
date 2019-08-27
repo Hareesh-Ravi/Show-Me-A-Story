@@ -350,13 +350,17 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
 def trainstage2(config, train_data, valid_data, num_words, embedding_matrix):
 
     traindir = config['datadir'] + 'train/'
+    valdir = config['datadir'] + 'val/'
     epochs = config['stage2']['epochs']
     BS = config['stage2']['batchsize']
     modelname = (config['savemodel'] + 'stage2_' + 
                  config['date'] + '.h5')
-
-    coh_sent_train = np.expand_dims(np.load(traindir + 
-                                            'cohvec_train.npy'), axis=1)
+    modeltype = config['model']
+    if modeltype == 'cnsi':
+        coh_sent_train = np.expand_dims(np.load(traindir + 
+                                                'cohvec_train.npy'), axis=1)
+        coh_sent_val = np.expand_dims(np.load(valdir + 
+                                                'cohvec_val.npy'), axis=1)
     
     # load train image IDs
     train_image = utils_vist.getImgIds(traindir + 'train_image.csv')
@@ -395,14 +399,17 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix):
     for i in range(0, epochs):
         tempIDS = np.array(list(train_image))
         tempIDS = tempIDS[0:NumTrain, :]
-        tempCoh = coh_sent_train[0:NumTrain, :]
-        np.repeat(tempCoh, 5, axis=1)
+        if modeltype == 'cnsi':
+            tempvalcoh = coh_sent_val[0:NumVal, :]
+            tempvalcoh = np.repeat(tempvalcoh, 5, axis=1)
+            tempCoh = coh_sent_train[0:NumTrain, :]
+            coh_train = np.zeros((NumTrain, 5, 64))
+            tempCoh = np.repeat(tempCoh, 5, axis=1)
 
         iterations = math.floor(np.size(tempIDS, 0) / BS)
 
         p = np.zeros(np.size(tempIDS, 0), dtype=float)
         temptrain = np.zeros_like(tempIDS)
-        coh_train = np.zeros((NumTrain, 5, 64))
         permsamp, TotIdx, Totinv, TotCount = np.unique(tempIDS, axis=0,
                                                        return_counts=True,
                                                        return_index=True,
@@ -429,16 +436,26 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix):
             temptrain[BS * j:BS * (j + 1), :] = tempIDS[sampled_arr, :]
             x_train1[BS * j:BS * (j + 1), :, :] = x_train[sampled_arr, :, :]
             y_train1[BS * j:BS * (j + 1), :, :] = y_train[sampled_arr, :, :]
-            coh_train[BS * j:BS * (j + 1), :, :] = tempCoh[sampled_arr, :, :]
+            if modeltype == 'cnsi':
+                coh_train[BS * j:BS * (j + 1), :, :] = tempCoh[sampled_arr, :, 
+                                                               :]
             if j > (iterations - 100):
                 sampled_arr = list(set(sampled_arr) - ToNotDel)
             tempIDS[sampled_arr, 0] = -1
             p[sampled_arr] = -1
-
-        history = StoryEncoder.fit([x_train1, coh_train], y_train1, 
-                                   validation_data = (x_val, y_val), epochs=1,
-                                   batch_size=BS, verbose=1, 
-                                   callbacks=[checkpointer])
+        if modeltype == 'cnsi':
+            history = StoryEncoder.fit([x_train1, coh_train], y_train1, 
+                                       validation_data = ([x_val, tempvalcoh],  
+                                                          y_val), 
+                                       epochs=1,
+                                       batch_size=BS, verbose=1, 
+                                       callbacks=[checkpointer])
+        else:
+            history = StoryEncoder.fit(x_train1, y_train1, 
+                                       validation_data = (x_val, y_val), 
+                                       epochs=1,
+                                       batch_size=BS, verbose=1, 
+                                       callbacks=[checkpointer])
         print("epoch: {} completed".format(i))
     
     average_time_per_epoch = (time.time() - start_time) / epochs

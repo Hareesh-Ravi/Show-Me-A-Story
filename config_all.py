@@ -23,8 +23,8 @@ def create_config():
 
     # filenames
     config['glovetext'] = './data/glove.6B.300d.txt'
-    config['testsamples'] = ('./data/testing/test_samples.txt')
-    config['savepred'] = ('./data/testing/test_samples_prediction.pickle')
+    config['testsamples'] = ('./data/test_samples.txt')
+    config['savepred'] = ('./data/test_samples_prediction.pickle')
     config['savemodel'] = './TrainedModels/'
     
     # Pretraining stage 1 (or baseline) parameters

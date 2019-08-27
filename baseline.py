@@ -22,12 +22,8 @@ def init(param):
     global MAX_SEQUENCE_LENGTH
     MAX_SEQUENCE_LENGTH = param['MAX_SEQUENCE_LENGTH']
 
-def train(params): 
-    
-    # load all data
-    print('Loading data')
-    num_words, embedding_matrix, train_data, valid_data, test_data = loadData()
-    
+# train baseline on VIST dataset
+def train(params, num_words, embedding_matrix, train_data, valid_data):   
 
     print('no of total train samples: {0:d}'.format(len(train_data[0])))
     print('no of total val samples: {0:d}'.format(len(valid_data[0])))
@@ -120,10 +116,10 @@ def train(params):
             
         train_input = [xtrain, ytrain]
         history = model_base.fit(train_input, train_label,
-                            validation_data = (valid_data, valid_label), 
-                            batch_size=batchsize, 
-                            verbose=1, 
-                            callbacks=[checkpointer])
+                                 validation_data = (valid_data, valid_label), 
+                                 batch_size=batchsize, 
+                                 verbose=1, 
+                                 callbacks=[checkpointer])
 
     average_time_per_epoch = (time.time() - start_time) / epochs
 
@@ -132,12 +128,9 @@ def train(params):
                     params['general']['date'] + '.h5')
     return model_base
  
-def test(params):
+def test(params, num_words, embedding_matrix, test_data):
     
-    # load all data
-    print('Loading data')
-    num_words, embedding_matrix, train_data, valid_data, test_data = loadData()
-    
+    # load all data    
     test_batch = len(test_data[0])
     model_test = model.baseline(num_words, embedding_matrix)
     model_test.load_weights('baseline_' + params['general']['date'] + 
@@ -160,6 +153,11 @@ if __name__ == "__main__":
         params = json.load(open('config.json'))
     except FileNotFoundError:
         params = create_config()
+        
+    # load all data
+    print('Loading data')
+    num_words, embedding_matrix, train_data, valid_data, test_data = loadData()
+    
     assert params['model'] == 'baseline'
     print('general config:')
     print (json.dumps(params['general'], indent=2))
@@ -167,9 +165,9 @@ if __name__ == "__main__":
     print (json.dumps(params['stage1'], indent=2))
     init(params['stage1'])
     if params['general']['train']:
-        train(params)
+        train(params, num_words, embedding_matrix, train_data, valid_data)
     if params['general']['test']:
-        test(params)
+        test(params, num_words, embedding_matrix, test_data)
     if params['general']['eval']:
         evaluate(params)
     
