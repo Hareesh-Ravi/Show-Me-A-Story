@@ -52,6 +52,7 @@ Story Illustration is the problem of retrieving/generating a sequence of images,
        ```
        Modify `WNDIR` to point to Wordnet installation
      - `make everything`
+     - modify `testgrid_path = /absolute-path-to/browncoherence/bin64/TestGrid` in [entity_score.py](./coherence_vector/entity_score.py)
 
 ## Data Processing
 1. run process_vist.py 
