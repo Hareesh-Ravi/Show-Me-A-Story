@@ -21,7 +21,7 @@ Story Illustration is the problem of retrieving/generating a sequence of images,
      - `mv stanford-corenlp-full-2018-10-05.zip stanford-parser`
 
   2. Download WordNet-3.0.tar.gz from https://wordnet.princeton.edu/download/current-version to [root dir](.).
-     - `unzip WordNet-3.0.tar.gz`
+     - `tar xvzf WordNet-3.0.tar.gz`
      - Follow instructions in INSTALL file in the [folder](./WordNet-3.0/). 
      
   3. Download and Install Brown Coherence Model (https://bitbucket.org/melsner/browncoherence/src/default/) to [root dir](.)
