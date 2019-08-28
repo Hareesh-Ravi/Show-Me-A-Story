@@ -15,16 +15,20 @@ Story Illustration is the problem of retrieving/generating a sequence of images,
 
 - For the coherence vector (Works only in Linux. Let us know if you make it work in Windows)
 
-  1. Download stanford codeNLP parser (3.9.2) from https://stanfordnlp.github.io/CoreNLP/ to [root dir](./).
+  1. Download stanford codeNLP (3.9.2) from https://stanfordnlp.github.io/CoreNLP/ to [root dir](./).
     
      - `unzip stanford-corenlp-full-2018-10-05.zip`
-     - `mv stanford-corenlp-full-2018-10-05.zip stanford-parser`
+     - `mv stanford-corenlp-full-2018-10-05.zip stanford-core`
+     
+  2. Download stanford parser (3.9.2) from https://nlp.stanford.edu/software/lex-parser.shtml to [root dir](./).
+     - `unzip stanford-parser-full-2018-10-17.zip`
+     - `mv stanford-corenlp-full-2018-10-17.zip stanford-parser`
 
-  2. Download WordNet-3.0.tar.gz from https://wordnet.princeton.edu/download/current-version to [root dir](.).
+  3. Download WordNet-3.0.tar.gz from https://wordnet.princeton.edu/download/current-version to [root dir](.).
      - `tar xvzf WordNet-3.0.tar.gz`
      - Follow instructions in INSTALL file in the [folder](./WordNet-3.0/). 
      
-  3. Download and Install Brown Coherence Model (https://bitbucket.org/melsner/browncoherence/src/default/) to [root dir](.)
+  4. Download and Install Brown Coherence Model (https://bitbucket.org/melsner/browncoherence/src/default/) to [root dir](.)
     
      - `wget https://bitbucket.org/melsner/browncoherence/get/d46d5cd3fc57.zip -O browncoherence.zip`
      - `unzip browncoherence.zip`
