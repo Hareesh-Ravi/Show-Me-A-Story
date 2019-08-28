@@ -18,7 +18,7 @@ if __name__ == '__main__':
     
     #argument parsing
     parser = argparse.ArgumentParser()
-    parser.add_argument('--preprocess', type=str, default='data', 
+    parser.add_argument('--preprocess', type=str, default=None, 
                         help='use this argument to preprocess VIST data')
     parser.add_argument('--pretrain', action='store_true', default=False, 
                         help='use this to pre-trainstage 1 of the network')
@@ -60,6 +60,8 @@ if __name__ == '__main__':
         coherenceVec.main(configs)
         print('coherence vector extracted for all stories in {} secs'.format(
                 time.time() - starttime))
+    elif not args.preprocess:
+        pass
     else:
         raise ValueError('preprocess types are data, imagefeatures and ' + 
                          'coherencevectors')
