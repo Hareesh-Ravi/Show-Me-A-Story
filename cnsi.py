@@ -507,26 +507,26 @@ def test(config, modelname, test_data, num_words, embedding_matrix,
 
 def main(config, process, modeltype='cnsi', model2test=None):
     
-    print('model name..:')
+    print('model name..')
     print(modeltype)
-    print('general config..:')
-    print (json.dumps(config['general'], indent=2))
-    print('stage 1 model parameters..:')
-    print (json.dumps(config['stage1'], indent=2))
-    print('stage 2 model parameters..:')
-    print (json.dumps(config['stage2'], indent=2))
     
     print('loading data..')
+    starttime = time.time()
     num_words, embedding_matrix, train_data, valid_data, test_data = loadData(
             config)
-    
+    print('loading data takes {} seconds'.format(time.time() - starttime))
     if process == 'pretrain':
-        pretrain(config['stage1'], train_data, num_words, 
-                 embedding_matrix)
+        print('pretraining config..:')
+        print (json.dumps(config['pretrain'], indent=2))
+        pretrain(config['stage1'], 'coco')
     if process == 'trainstage1':
+        print('stage 1 model parameters..:')
+        print (json.dumps(config['stage1'], indent=2))
         trainstage1(config['stage1'], train_data, num_words, 
                     embedding_matrix)
     if process == 'trainstage2':
+        print('stage 2 model parameters..:')
+        print (json.dumps(config['stage2'], indent=2))
         trainstage2(config['stage2'], train_data, num_words, 
                     embedding_matrix, modeltype)
     if process == 'test':

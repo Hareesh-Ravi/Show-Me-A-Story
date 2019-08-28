@@ -11,6 +11,7 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 import configAll
 import utils_vist
+import time
 
 # load train, val and test data of stories, images and embedding matrix
 def loadData(config):
@@ -20,12 +21,12 @@ def loadData(config):
     valdir = config['datadir'] + 'val/'
     glovetext = config['glovetext']
     
-    MAX_SEQUENCE_LENGTH = config['MODEL_Sent_Img_PARAMS'][
-            'MAX_SEQUENCE_LENGTH']
-    img_fea_dim = config['MODEL_Sent_Img_PARAMS']['img_fea_dim']
-    EMBEDDING_DIM = config['MODEL_Sent_Img_PARAMS']['wd_embd_dim']
-    MAX_NB_WORDS = config['MODEL_Sent_Img_PARAMS']['MAX_NB_WORDS']
-
+    MAX_SEQUENCE_LENGTH = config['stage1']['MAX_SEQUENCE_LENGTH']
+    img_fea_dim = config['stage1']['img_fea_dim']
+    EMBEDDING_DIM = config['stage1']['wd_embd_dim']
+    MAX_NB_WORDS = config['stage1']['MAX_NB_WORDS']
+    
+    starttime = time.time()
     # load img feat files
     img_fea_train = json.loads(open(traindir + 'train_imgfeat.json').read())
     img_fea_valid = json.loads(open(valdir + 'val_imgfeat.json').read())
@@ -41,10 +42,10 @@ def loadData(config):
     valid_sents = utils_vist.getSent(valdir + 'val_text.csv')
     test_sents = utils_vist.getSent(testdir + 'test_text.csv')
     
-    print('loaded all files..')
+    print('loaded all files in {} secs'.format(time.time() - starttime))
     # get word vectors from glove
     embeddings_index = {}
-    f = open(glovetext)
+    f = open(glovetext, 'r', encoding='utf-8')
     for line in f:
         values = line.split()
         word = values[0]
