@@ -1,19 +1,6 @@
 # Coherent Neural Story Illustration (WORK IN PROGRESS)
+Story Illustration is the problem of retrieving/generating a sequence of images, given a natural language story as input. We propose a hierarchical [GRU](https://en.wikipedia.org/wiki/Gated_recurrent_unit) network that learns a representation for the input story and use it to retrieve an ordered set of images from a dataset. In its core, the model is designed to explicitly model coherence between sentences in a story optimized over sequential order embedding based loss function. This repository has the code to replicate experiments detailed in our paper titled "Show Me a Story: Towards Coherent Neural Story Illustration" ([PDF](http://openaccess.thecvf.com/content_cvpr_2018/papers/Ravi_Show_Me_a_CVPR_2018_paper.pdf)). The proposed network architecture is shown in the [Figure](./net_arch.png) below. 
 ![Proposed Network](./net_arch.png)
-
-This repository has the code to replicate experiments detailed in our paper titles "Show Me a Story: Towards Coherent Neural Story Illustration". This paper addresses the problem of retrieving a sequence of images given a sequence of narrative natural language text using the above network architecture. If you use this code or any part of it, please cite the following paper. 
-
-## Reference
-```
-@InProceedings{Ravi_2018_CVPR,
-author = {Ravi, Hareesh and Wang, Lezi and Muniz, Carlos and Sigal, Leonid and Metaxas, Dimitris and Kapadia, Mubbasir},
-title = {Show Me a Story: Towards Coherent Neural Story Illustration},
-booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
-month = {June},
-year = {2018}
-}
-```
-[PDF](http://openaccess.thecvf.com/content_cvpr_2018/papers/Ravi_Show_Me_a_CVPR_2018_paper.pdf)
 
 ## Install Instructions
 
@@ -85,3 +72,15 @@ year = {2018}
 2. Put test images as part of images 
 3. Extract vggfeat for these images by modifying vggfeat_vist.py code
 4. Run Step 2 or Step as needed
+
+## Reference
+If you use this code or any part of it, please cite the following paper. 
+```
+@InProceedings{Ravi_2018_CVPR,
+author = {Ravi, Hareesh and Wang, Lezi and Muniz, Carlos and Sigal, Leonid and Metaxas, Dimitris and Kapadia, Mubbasir},
+title = {Show Me a Story: Towards Coherent Neural Story Illustration},
+booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+month = {June},
+year = {2018}
+}
+```
