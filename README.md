@@ -28,12 +28,11 @@ Story Illustration is the problem of retrieving/generating a sequence of images,
 
   3. Download WordNet-3.0.tar.gz from https://wordnet.princeton.edu/download/current-version to [root dir](.).
      - `tar xvzf WordNet-3.0.tar.gz`
-     - add `#define USE_INTERP_RESULT` before `#include <tcl.h>` in `WordNet-3.0/src/stubs.c/'
+     - add `#define USE_INTERP_RESULT` before `#include <tcl.h>` in `WordNet-3.0/src/stubs.c/`
      - `cd WordNet-3.0` and `sudo ./configure`
      - `sudo make` and `sudo make install`
      
   4. Download and Install Brown Coherence Model (https://bitbucket.org/melsner/browncoherence/src/default/) to [root dir](.)
-    
      - `wget https://bitbucket.org/melsner/browncoherence/get/d46d5cd3fc57.zip -O browncoherence.zip`
      - `unzip browncoherence.zip`
      - `mv melsner-browncoherence-d46d5cd3fc57 browncoherence`
