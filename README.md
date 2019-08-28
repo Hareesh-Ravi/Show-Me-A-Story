@@ -67,24 +67,18 @@ Parameters for all processes below can be modified in `config.json`. If no file 
     - `python run.py --train nsi` to train nsi model stage 2 (uses trained stage 1 model)
     - `python run.py --train baseline` to train baseline model (does not use any of the models from above)
 3. prediction
+    - `python run.py --eval modeltype` where modeltype can be 'cnsi', 'nsi', or 'baseline'.
+4. illustrate
+    - `python run.py --show modeltype`, where modeltype can be 'cnsi', 'nsi', or 'baseline'.
+NOTE: skip step 1 and 2 and download trained models from this link to evaluate the proposed models.  
 
-## To use trained model on evaluation for VIST test data
-1. run '' for eval baseline 
-2. run '' for eval nsi 
-3. run '' for eval cnsi
-
-## To train your own models
-1. Modify config_all.py to modify parameters. 
-2. To train stage 1 run ''
-3. To train baseline run ''
-4. To train stage2 nsi run ''
-5. To train stage2 cnsi run '' 
-
-## To evaluate on different data
-1. Create test data storied in same format as in data/test/
-2. Put test images as part of images 
-3. Extract vggfeat for these images by modifying vggfeat_vist.py code
-4. Run Step 2 or Step as needed
+## To run trained models on different data
+1. Put the story in `test_text.csv` in [./data/test/](./data/test/).
+2. If you have images, then put their IDs in corresponding rows of their stories in `test_image.csv`.
+3. Put the actual images in [./data/raw/images/test/](./data/raw/images/test/).
+4. Extract vggfeat for these images by modifying vggfeat_vist.py code.
+5. Modify [./data/test_samples.txt](./data/test_samples.txt) to include row numbers of the new test data or totally replace existing ones. 
+6. Execute prediction and illustrate steps from above.
 
 ## Reference
 If you use this code or any part of it, please cite the following paper. 
