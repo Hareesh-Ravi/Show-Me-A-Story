@@ -1,5 +1,7 @@
 # Coherent Neural Story Illustration (WORK IN PROGRESS)
 Story Illustration is the problem of retrieving/generating a sequence of images, given a natural language story as input. We propose a hierarchical [GRU](https://en.wikipedia.org/wiki/Gated_recurrent_unit) network that learns a representation for the input story and use it to retrieve an ordered set of images from a dataset. In its core, the model is designed to explicitly model coherence between sentences in a story optimized over sequential order embedding based loss function. This repository has the code to replicate experiments detailed in our paper titled "Show Me a Story: Towards Coherent Neural Story Illustration" ([PDF](http://openaccess.thecvf.com/content_cvpr_2018/papers/Ravi_Show_Me_a_CVPR_2018_paper.pdf)). The proposed network architecture is shown in the [Figure](./net_arch.png) below. 
+
+
 ![Proposed Network](./net_arch.png)
 
 ## Install Instructions
