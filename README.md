@@ -33,7 +33,8 @@ Story Illustration is the problem of retrieving/generating a sequence of images,
      - `mkdir lib64`
      - `mkdir bin64`
      - `vim include/common.h` and modify DATA_PATH definition to point to "./data/"
-     - `uncompress data/ldaFiles.tar.bz2 and models/ww-wsj.dump.bz2
+     - `tar -xvjf data/ldaFiles.tar.bz2 `
+     - `bzip2 -dk models/ww-wsj.dump.bz2`
      - `vim Makefile`
      
        Change the followings from top to bottom.
