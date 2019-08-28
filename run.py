@@ -54,6 +54,8 @@ if __name__ == '__main__':
                 time.time() - starttime))
     elif args.preprocess == 'coherencevectors':
         # get coherence vector for all stories
+        # run following command in terminal before running below code
+        # java -mx4g -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer
         starttime = time.time()
         coherenceVec.main(configs)
         print('coherence vector extracted for all stories in {} secs'.format(
