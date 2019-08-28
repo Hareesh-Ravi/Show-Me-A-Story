@@ -56,8 +56,8 @@ def new_entity_grid(grid_dataframe_or_file_handle,
 
         # If we are constructing from a file, read in and parse, otherwise
         # just get the dataframe.
-        print(type(grid_dataframe_or_file_handle.decode('utf-8')))
-        print(grid_dataframe_or_file_handle)
+        #print(type(grid_dataframe_or_file_handle.decode('utf-8')))
+        #print(grid_dataframe_or_file_handle)
         grid_dataframe_or_file_handle = grid_dataframe_or_file_handle.decode('utf-8')
         entities=[]
         if hasattr(grid_dataframe_or_file_handle, 'read'):
