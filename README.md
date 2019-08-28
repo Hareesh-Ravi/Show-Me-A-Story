@@ -23,10 +23,14 @@ Story Illustration is the problem of retrieving/generating a sequence of images,
   2. Download stanford parser (3.9.2) from https://nlp.stanford.edu/software/lex-parser.shtml to [root dir](./).
      - `unzip stanford-parser-full-2018-10-17.zip`
      - `mv stanford-corenlp-full-2018-10-17.zip stanford-parser`
+     - `cd stanford-parser`
+     - `jar xvf stanford-parser-3.9.2-models.jar`
 
   3. Download WordNet-3.0.tar.gz from https://wordnet.princeton.edu/download/current-version to [root dir](.).
      - `tar xvzf WordNet-3.0.tar.gz`
-     - Follow instructions in INSTALL file in the [folder](./WordNet-3.0/). 
+     - add `#define USE_INTERP_RESULT` before `#include <tcl.h>` in `WordNet-3.0/src/stubs.c/'
+     - `cd WordNet-3.0` and `sudo ./configure`
+     - `sudo make` and `sudo make install`
      
   4. Download and Install Brown Coherence Model (https://bitbucket.org/melsner/browncoherence/src/default/) to [root dir](.)
     
@@ -41,7 +45,7 @@ Story Illustration is the problem of retrieving/generating a sequence of images,
      - `bzip2 -dk models/ww-wsj.dump.bz2`
      - `vim Makefile`
      
-       Change the followings from top to bottom.
+       Change the following from top to bottom.
        ```
        WORDNET = 1
        WORDNET = 0
@@ -54,9 +58,10 @@ Story Illustration is the problem of retrieving/generating a sequence of images,
        WNLIBS = -L$(WNDIR)/lib -lWN
        WNLIBS = -L$(WNDIR)/lib -lwordnet
        ```
-       Modify `WNDIR` to point to Wordnet installation
+       Modify `WNDIR` to point to Wordnet installation (usually it will be `usr/local/WordNet-3.0`)
      - `make everything`
      - modify `testgrid_path = /absolute-path-to/browncoherence/bin64/TestGrid` in [entity_score.py](./coherence_vector/entity_score.py)
+     - `cd ..` and `sudo cp -r ./browncoherence/data ./browoncoherence/data/bin64/`
 
 ## To run codes on VIST data
 Parameters for all processes below can be modified in `config.json`. If no file is present, `config.json` is created by `configAll.py` and hence might be valuable to change there as well.
