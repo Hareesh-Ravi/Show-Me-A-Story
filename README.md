@@ -54,10 +54,19 @@ Story Illustration is the problem of retrieving/generating a sequence of images,
      - `make everything`
      - modify `testgrid_path = /absolute-path-to/browncoherence/bin64/TestGrid` in [entity_score.py](./coherence_vector/entity_score.py)
 
-## Data Processing
-1. run process_vist.py 
-2. run vggfeat_vist.py
-3. run get_cohvec_vist.py
+## To run codes on VIST data
+Parameters for all processes below can be modified in `config.json`. If no file is present, `config.json` is created by `configAll.py` and hence might be valuable to change there as well.
+1. preprocessing
+    - `python run.py --preprocess data` to get data files ready
+    - `python run.py --preprocess imagefeatures` to get VGG16 features for all images in the data. NOTE: This code also removes stories that do not have images.
+    - `python run.py --preprocess coherencevectors` to extract coherence vectors for all stories (has to be run after image features are extracted)
+2. training
+    - `python run.py --pretrain` will train stage 1 model on MS COCO dataset. 
+    - `python run.py --train stage1` will train stage 1 model on VIST dataset.  
+    - `python run.py --train cnsi` to train cnsi model stage 2 (uses trained stage 1 model)
+    - `python run.py --train nsi` to train nsi model stage 2 (uses trained stage 1 model)
+    - `python run.py --train baseline` to train baseline model (does not use any of the models from above)
+3. prediction
 
 ## To use trained model on evaluation for VIST test data
 1. run '' for eval baseline 
