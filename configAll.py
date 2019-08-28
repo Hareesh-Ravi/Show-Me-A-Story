@@ -29,7 +29,7 @@ def create_config():
     config['pretrain']['img_fea_dim'] = 4096
     config['pretrain']['MAX_NB_WORDS'] = 30000
     config['pretrain']['wd_embd_dim'] = 300
-    config['pretrain']['embedding_dim'] = 1024
+    config['pretrain']['sent_fea_dim'] = 1024
     config['pretrain']['batchsize'] = 1
     config['pretrain']['epochs'] = 15
     config['pretrain']['word_count_threshold'] = 1

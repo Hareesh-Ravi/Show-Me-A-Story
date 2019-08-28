@@ -58,7 +58,8 @@ def preProBuildWordVocab(config, sentence_iterator, word_count_threshold):
     wd_embd_dim = config['pretrain']['wd_embd_dim']
     print('Indexing word vectors.')
     embeddings_index = {}
-    f = open(os.path.join('./glove.6B', 'glove.6B.300d.txt'))
+    f = open(os.path.join(config['datadir'], 'glove.6B.300d.txt'), 'r', 
+             encoding='utf-8')
     for line in f:
         values = line.split()
         word = values[0]
@@ -114,7 +115,7 @@ def pretrain(config, dataset):
     img_feat_dim = config['pretrain']['img_fea_dim']
     word_count_threshold = config['pretrain']['word_count_threshold']
     modelname = (config['savemodel'] + 'stage1_pretrain_' + 
-                 config['general']['date'] + '.h5')
+                 config['date'] + '.h5')
     print('Loading image-sentence pair')
     dp = getDataProvider(dataset)
     # stores various misc items that need to be passed around the framework
@@ -129,6 +130,7 @@ def pretrain(config, dataset):
             len(data_train), len(data_valid)))
 
     global batch_size
+    batch_size = config['pretrain']['batchsize']
     num_sents_ori = len(data_train) * 5
     train_num = math.floor(num_sents_ori/batch_size) * batch_size
     #train_num = 1024
@@ -138,7 +140,7 @@ def pretrain(config, dataset):
     # go over all training sentences and find the vocabulary we want to use, 
     # i.e. the words that occur at least word_count_threshold number of times
     misc['wordtoix'], embedding_matrix, num_words = preProBuildWordVocab(
-            dp.iterSentences_train_val(), word_count_threshold)
+            config, dp.iterSentences_train_val(), word_count_threshold)
 
     # generate training pairs of image feat and sentence
     print('generate image_feat and sent idx pair...')
@@ -194,7 +196,8 @@ def pretrain(config, dataset):
     mode = 1
     print('Testing mode: implementation={}'.format(mode))
 
-    pretrain_model = model.baseline(config, num_words, embedding_matrix)
+    pretrain_model = model.baseline(config['pretrain'], num_words, 
+                                    embedding_matrix)
 
     filepath = "./tmp/stage1_pretrain_coco-{epoch:02d}.h5"
     checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
@@ -510,25 +513,30 @@ def main(config, process, modeltype='cnsi', model2test=None):
     print('model name..')
     print(modeltype)
     
+       
+    if process == 'pretrain':
+        print('pretraining config..:')
+        print (json.dumps(config['pretrain'], indent=2))
+        pretrain(config, 'coco')
+    
     print('loading data..')
     starttime = time.time()
     num_words, embedding_matrix, train_data, valid_data, test_data = loadData(
             config)
     print('loading data takes {} seconds'.format(time.time() - starttime))
-    if process == 'pretrain':
-        print('pretraining config..:')
-        print (json.dumps(config['pretrain'], indent=2))
-        pretrain(config['stage1'], 'coco')
+    
     if process == 'trainstage1':
         print('stage 1 model parameters..:')
         print (json.dumps(config['stage1'], indent=2))
-        trainstage1(config['stage1'], train_data, num_words, 
+        trainstage1(config, train_data, num_words, 
                     embedding_matrix)
+        
     if process == 'trainstage2':
         print('stage 2 model parameters..:')
         print (json.dumps(config['stage2'], indent=2))
-        trainstage2(config['stage2'], train_data, num_words, 
+        trainstage2(config, train_data, num_words, 
                     embedding_matrix, modeltype)
+        
     if process == 'test':
         test(config, model2test, test_data, num_words, embedding_matrix, 
              modeltype)

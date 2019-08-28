@@ -86,11 +86,10 @@ def MyCustomLoss(yTure, yPred):
 
 
 # network architecture for baseline experiment
-def baseline(config, num_words, embedding_matrix):
+def baseline(modconfig, num_words, embedding_matrix):
     
     # read config
-    modconfig = config['MODEL_Sent_Img_PARAMS']
-    MAX_SEQUENCE_LENGTH = modconfig['maxseqlen']
+    MAX_SEQUENCE_LENGTH = modconfig['MAX_SEQUENCE_LENGTH']
     word_embd_dim = modconfig['wd_embd_dim']
     sent_feat_dim = modconfig['sent_fea_dim']
     img_feat_dim = modconfig['img_fea_dim']
