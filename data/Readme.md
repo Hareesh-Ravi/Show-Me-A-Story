@@ -1,16 +1,16 @@
 ##Folder Structure
 
 Put VIST data files inside ./raw
-./raw
-    ./raw/dii
-    ./raw/sis
-    ./raw/images
+1 ./raw
+    - ./raw/dii
+    - ./raw/sis
+    - ./raw/images
 
 Create Following folders and leave them empty
-./train
-./test
-./val
+2 ./train
+3 ./test
+4 ./val
 
 Put MS COCO dataset inside 
-./coco
+5 ./coco
 
