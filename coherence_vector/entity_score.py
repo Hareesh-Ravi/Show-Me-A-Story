@@ -12,7 +12,7 @@ args['models']="./stanford-parser/stanford-parser-3.5.2-models.jar"
 args['grammar']="./stanford-parser/stanford-parser-3.5.2-models/edu/stanford/nlp/models/lexparser/englishPCFG.caseless.ser.gz"
 args['threads']=2
 args['max_length']=1000
-testgrid_path="/media/data2/hareesh_research/cnsi/multimodal-ai/browncoherence/bin64/TestGrid"
+testgrid_path="/media/data2/hareesh_research/cnsi/Show-Me-A-Story/browncoherence/bin64/TestGrid"
 
 def entity_feature(trees_list):
 

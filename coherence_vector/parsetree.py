@@ -12,7 +12,7 @@ def make_grid(testgrid_path,trees):
     testgrid_base=os.path.dirname(testgrid_path)
     content_path=os.path.join(testgrid_base,'tmp.txt')
     if type(trees) is dict:
-        content_path=os.path.join(testgrid_base,trees['key'])
+        content_path=os.path.join(testgrid_base, trees['key'])
         trees=trees['trees']
     f = open(content_path, 'w')
     if type(trees)==list:
