@@ -9,7 +9,7 @@ import json
 import csv
 import os
 import utils_vist
-import config_all
+import configAll
 
 # process annotations dict to get image ids and text for stories
 # This gives two "No.Of.Stories x 5" sized matrices - one having text and
@@ -97,7 +97,7 @@ def main(config):
     
     datadir = config['datadir'] + 'raw/'
     savedir = config['datadir']
-    
+    print('processing VIST data...')
     #organize "Story in sequence" of VIST dataset as story x sequence
 
     process = ['train', 'val', 'test']
@@ -107,7 +107,7 @@ def main(config):
         data = json.loads(json_data)
         annotations = data["annotations"]
         
-        imagedata, textdata = sis_2_csv(annotations, proc, savedir, config)
+        imagedata, textdata = sis_2_csv(annotations, proc, savedir)
     
     # Organize description in isolation for VIST dataset
      
@@ -118,7 +118,7 @@ def main(config):
         
         annotations = data["annotations"]
         
-        capdata = dii_2_json(annotations, proc, savedir, config)
+        capdata = dii_2_json(annotations, proc, savedir)
     return imagedata, textdata, capdata
     
 if __name__ == '__main__':
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     try:
         config = json.load(open('config.json'))
     except FileNotFoundError:
-        config = config_all.create_config()
+        config = configAll.create_config()
     main(config)
     
         

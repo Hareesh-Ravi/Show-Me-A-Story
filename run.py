@@ -4,51 +4,71 @@ Created on Fri Aug 23 17:09:01 2019
 
 @author: HareeshRavi
 """
-import config_all
+import configAll
 import cnsi
 import baseline
 import process_vist
 import vggfeat_vist
-import get_cohvec_vist
+import coherenceVec
 import argparse
-
+import time
+import json
 
 if __name__ == '__main__':
     
     #argument parsing
     parser = argparse.ArgumentParser()
-    parser.add_argument('--preprocess', action='store_true', default=False, 
+    parser.add_argument('--preprocess', type=str, default='data', 
                         help='use this argument to preprocess VIST data')
     parser.add_argument('--pretrain', action='store_true', default=False, 
                         help='use this to pre-trainstage 1 of the network')
-    parser.add_argument('--train', type=str, default='stage1', 
+    parser.add_argument('--train', type=str, default=None, 
                         help ='train stage1, cnsi, nsi or baseline')
-    parser.add_argument('--eval', type=str, default='stage1', 
+    parser.add_argument('--eval', type=str, default=None, 
                         help ='evaluate cnsi, nsi or baseline')
-    parser.add_argument('--show', type=str, default='stage1', 
+    parser.add_argument('--show', type=str, default=None, 
                         help ='show the story for cnsi, nsi or baseline')
     args = parser.parse_args()
     
     # get config
-    configs = config_all.create_config()
+    try:
+        configs = json.load(open('config.json'))
+    except FileNotFoundError:
+        configs = configAll.create_config()
     '''
     To preprocess
     '''
-    if args.preprocess:
+    if args.preprocess == 'data':
+        
         # process vist data jsons and put it according to usage
+        starttime = time.time()
         process_vist.main(configs)
+        print('vist data files created in {} secs'.format(time.time() - 
+              starttime))
+    elif args.preprocess == 'imagefeatures':
         # extract vgg feats for all images. also remove images (and stories)
         # for where images are not present
+        starttime = time.time()
         vggfeat_vist.main(configs)
+        print('vggfeat extracted for all images in {} secs'.format(
+                time.time() - starttime))
+    elif args.preprocess == 'coherencevectors':
         # get coherence vector for all stories
-        get_cohvec_vist.main(configs)
-    
+        starttime = time.time()
+        coherenceVec.main(configs)
+        print('coherence vector extracted for all stories in {} secs'.format(
+                time.time() - starttime))
+    else:
+        raise ValueError('preprocess types are data, imagefeatures and ' + 
+                         'coherencevectors')
     
     if args.pretrain:
         '''
         Pretrain stage 1 on MSCOCO dataset
         '''
         cnsi.main(configs, 'pretrain')
+    else:
+        pass
         
     if args.train == 'stage1':
         '''
@@ -74,6 +94,8 @@ if __name__ == '__main__':
         '''
         configs['model'] = 'baseline'
         baseline.main(configs, 'train')
+    elif not args.train:
+        pass
     else:
         raise ValueError('args for train can be stage1, cnsi, ' + 
                          'nsi or baseline only')
@@ -95,6 +117,11 @@ if __name__ == '__main__':
     elif args.eval == 'baseline':
         # get predictions for stories from testsamples for baseline model
         baseline.main(configs, 'test')
+    elif not args.eval:
+        pass
+    else:
+        raise ValueError('args for eval can be cnsi, ' + 
+                         'nsi or baseline only')
     
     
     '''
@@ -114,7 +141,11 @@ if __name__ == '__main__':
     elif args.show == 'baseline':
         # get predictions for stories from testsamples for baseline model
         baseline.main(configs, 'test')
-    
+    elif not args.show:
+        pass
+    else:
+        raise ValueError('args for eval can be cnsi, ' + 
+                         'nsi or baseline only')
     
     
     

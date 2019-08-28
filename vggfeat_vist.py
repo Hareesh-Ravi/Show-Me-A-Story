@@ -14,7 +14,7 @@ from keras.applications.vgg16 import preprocess_input
 from keras.preprocessing import image
 from keras.models import Model
 import utils_vist
-import config_all
+import configAll
 
 # Function to extract final FC layer features from VGG 16
 def ExtractFeat(model, imgname, image_size):
@@ -73,7 +73,7 @@ def main_func(datadir, process, model, isprune):
     print('processing {0:s} data'.format(process))
     # Load story to imageids csv file
     imageids = utils_vist.getImgIds(datadir + process + '/' + 
-                                    process + 'imageids.csv')  
+                                    process + '_imageids.csv')  
 
     # image2path file
     imagepath = datadir + 'raw/images/' + process + '/'
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     try:
         config = json.load(open('config.json'))
     except FileNotFoundError:
-        config = config_all.create_config()
+        config = configAll.create_config()
     
     main(config)
         

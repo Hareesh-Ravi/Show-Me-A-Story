@@ -9,7 +9,7 @@ import json
 import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-import config_all
+import configAll
 import utils_vist
 
 # load train, val and test data of stories, images and embedding matrix
@@ -124,5 +124,5 @@ if __name__ == '__main__':
     try:
         config = json.load(open('config.json'))
     except FileNotFoundError:
-        config = config_all.create_config()
+        config = configAll.create_config()
     loadData(config)

@@ -7,12 +7,13 @@ Created on Thu Aug 14 13:28:09 2018
 """
 
 import keras
-from keras.models import Sequential, Model
-from keras.layers import TimeDistributed, Dense, GRU, Dropout, Embedding,
+from keras.models import Model
+from keras.layers import TimeDistributed, Dense, GRU, Dropout, Embedding
 from keras.layers import Input, concatenate
 from keras import optimizers
 from keras import backend as K
 import tensorflow as tf
+import numpy as np
 
 
 def order_violations(s, im):
@@ -31,8 +32,8 @@ def contrastive_loss(s_im):
     im = s_im[1]
 
     # create two tensor 1xnumxdim  numx1xdim
-    s2 = K.expand_dims(s,1)
-    im2 = K.expand_dims(im,0)
+    s2 = K.expand_dims(s, 1)
+    im2 = K.expand_dims(im, 0)
 
     errors = K.sum(K.pow(K.maximum(0.0, s2 - im2), 2), axis=2)    	
     diagonal = tf.diag_part(errors)
@@ -45,7 +46,7 @@ def contrastive_loss(s_im):
 
     cost_tot = cost_s + cost_im
 
-    cost_tot = tf.matrix_set_diag(cost_tot, tf.zeros(batchsize))
+    cost_tot = tf.matrix_set_diag(cost_tot, tf.zeros(len(s)))
 
     return K.sum(cost_tot)
 
@@ -62,13 +63,13 @@ def retriv_acc(s_im):
     errors = K.sum(order_violations(s2, im2), axis=2)
 
 
-    inds = K.argmin(errors,axis=1)
-    inds = tf.cast(inds,tf.int32)
-    inds_true = tf.range(batchsize)
+    inds = K.argmin(errors, axis=1)
+    inds = tf.cast(inds, tf.int32)
+    inds_true = tf.range(len(s))
     elements_equal_to_value = tf.equal(inds, inds_true)
     as_ints = tf.cast(elements_equal_to_value, tf.int32)
     results = tf.reduce_sum(as_ints)
-    results = tf.cast(results,tf.float32)
+    results = tf.cast(results, tf.float32)
 
     return results
 
@@ -79,7 +80,7 @@ def edis_outputshape(input_shape):
     outshape = (shape[0][0],1)
     return tuple(outshape)
 
-# fpor baseline and stage1
+# for baseline and stage1
 def MyCustomLoss(yTure, yPred):
     return yPred
 

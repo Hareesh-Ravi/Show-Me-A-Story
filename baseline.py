@@ -3,8 +3,8 @@ import json
 import keras
 import numpy as np
 import math
-from load_VIST_data import loadData
-from config_all import create_config
+from load_data import loadData
+from configAll import create_config
 import model
 
 #  make params global for use

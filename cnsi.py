@@ -11,13 +11,13 @@ from load_data import loadData
 import math
 import pickle
 import json
-from config_all import create_config
+from configAll import create_config
 import model
 import utils_vist
 import time
 from keras.preprocessing import sequence
 import os
-from pretrain import getDataProvider
+from data_provider_mscoco import getDataProvider
 
 # get sentence vectors using stage 1 of trained network
 def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
@@ -196,7 +196,7 @@ def pretrain(config, dataset):
 
     pretrain_model = model.baseline(config, num_words, embedding_matrix)
 
-    filepath = "./tmp/testModel_coco-{epoch:02d}.h5"
+    filepath = "./tmp/stage1_pretrain_coco-{epoch:02d}.h5"
     checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
                                                    monitor='val_loss', 
                                                    verbose=0,
@@ -269,7 +269,7 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
         # continue training even without pretrained model
         print('stage 1 pretrained model does not exist. check!!!')
 
-    filepath = "./tmp/stage1-weights-{epoch:02d}.h5"
+    filepath = "./tmp/stage1_vist_weights-{epoch:02d}.h5"
     checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
                                                    monitor='val_loss', 
                                                    verbose=0,
@@ -372,7 +372,7 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix,
     StoryEncoder = model.stage2(config, num_words, embedding_matrix)
     StoryEncoder.summary()
     
-    filepath = "./tmp/stage2-weights-{epoch:02d}.h5"
+    filepath = "./tmp/stage2_vist_weights-{epoch:02d}.h5"
     checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
                                                    monitor='val_loss', 
                                                    verbose=0,
