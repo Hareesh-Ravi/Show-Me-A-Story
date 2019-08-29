@@ -18,7 +18,6 @@ import time
 from keras.preprocessing import sequence
 import os
 from data_provider_mscoco import getDataProvider
-import numpy as np
 
 # get sentence vectors using stage 1 of trained network
 def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
@@ -27,7 +26,7 @@ def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
     model_path = (config['savemodel'] + 'stage1_' + 
                   config['date'] + '.h5')
     print('model:{}'.format(model_path))
-    SentEncoder = modelArch.stage1(num_words, embedding_matrix)
+    SentEncoder = modelArch.stage1(config, num_words, embedding_matrix)
     SentEncoder.load_weights(model_path, by_name=True)
 
     # Extract Sent and Img features using sent encoder
@@ -260,11 +259,12 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
     valid_label = [fake_label_v, fake_label_v]
     
     # consider only valid_num samples for easily looping through each epoch
-    valid_data[0] = valid_data[0][0:valid_num]
-    valid_data[1] = valid_data[1][0:valid_num]
+    x_val = np.array(valid_data[0][0:valid_num])
+    y_val = np.array(valid_data[1][0:valid_num])
     
     # load model architecture
-    SentenceEncoder = modelArch.baseline(config, num_words, embedding_matrix)
+    SentenceEncoder = modelArch.baseline(config['stage1'], num_words, 
+                                         embedding_matrix)
     try:
         SentenceEncoder.load_weights((config['savemodel'] + 
                                       'stage1_pretrain_' + 
@@ -338,8 +338,9 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
             p[sampled_arr] = -1
             
         train_input = [xtrain, ytrain]
+        val_input = [x_val, y_val]
         history = SentenceEncoder.fit(train_input, train_label,
-                                      validation_data = (valid_data, 
+                                      validation_data = (val_input, 
                                                          valid_label), 
                                       batch_size=batchsize, 
                                       verbose=1, 
@@ -387,10 +388,12 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix,
                                                    period=1)
     
     # get sentence vectors for training and validation data
-    x_train, y_train = get_sent_img_feats_stage1(config, train_data, num_words,
+    x_train, y_train = get_sent_img_feats_stage1(config['stage1'], 
+                                                 train_data, num_words,
                                                  embedding_matrix)
     
-    x_val, y_val = get_sent_img_feats_stage1(config, train_data, num_words,
+    x_val, y_val = get_sent_img_feats_stage1(config['stage1'], 
+                                             valid_data, num_words,
                                              embedding_matrix)
 
     NumTrain = math.floor(np.size(x_train, 0)/BS) * BS
@@ -525,18 +528,18 @@ def main(config, process, modeltype='cnsi', model2test=None):
     starttime = time.time()
     num_words, embedding_matrix, train_data, valid_data, test_data = loadData(
             config)
-    print('loading data takes {} seconds'.format(time.time() - starttime))
+    print('data loaded in {} seconds'.format(time.time() - starttime))
     
     if process == 'trainstage1':
         print('stage 1 model parameters..:')
         print (json.dumps(config['stage1'], indent=2))
-        trainstage1(config, train_data, num_words, 
+        trainstage1(config, train_data, valid_data, num_words, 
                     embedding_matrix)
         
     if process == 'trainstage2':
         print('stage 2 model parameters..:')
         print (json.dumps(config['stage2'], indent=2))
-        trainstage2(config, train_data, num_words, 
+        trainstage2(config, train_data, valid_data, num_words, 
                     embedding_matrix, modeltype)
         
     if process == 'test':
