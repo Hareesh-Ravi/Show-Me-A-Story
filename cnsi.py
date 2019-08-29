@@ -12,12 +12,13 @@ import math
 import pickle
 import json
 from configAll import create_config
-import model
+import modelArch
 import utils_vist
 import time
 from keras.preprocessing import sequence
 import os
 from data_provider_mscoco import getDataProvider
+import numpy as np
 
 # get sentence vectors using stage 1 of trained network
 def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
@@ -26,7 +27,7 @@ def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
     model_path = (config['savemodel'] + 'stage1_' + 
                   config['date'] + '.h5')
     print('model:{}'.format(model_path))
-    SentEncoder = model.stage1(num_words, embedding_matrix)
+    SentEncoder = modelArch.stage1(num_words, embedding_matrix)
     SentEncoder.load_weights(model_path, by_name=True)
 
     # Extract Sent and Img features using sent encoder
@@ -196,10 +197,10 @@ def pretrain(config, dataset):
     mode = 1
     print('Testing mode: implementation={}'.format(mode))
 
-    pretrain_model = model.baseline(config['pretrain'], num_words, 
-                                    embedding_matrix)
-
-    filepath = "./tmp/stage1_pretrain_coco-{epoch:02d}.h5"
+    pretrain_model = modelArch.baseline(config['pretrain'], num_words, 
+                                        embedding_matrix)
+    
+    filepath = config['savemodel'] + "tmp/stage1_pretrain_coco-{epoch:02d}.h5"
     checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
                                                    monitor='val_loss', 
                                                    verbose=0,
@@ -210,13 +211,14 @@ def pretrain(config, dataset):
     start_time = time.time()
 
     train_input = [sent_widx, imgs_feat]
-    train_label = [fake_label,fake_label]
+    train_label = [fake_label, fake_label]
     valid_input = [sent_widx_v, imgs_feat_v]
-    valid_label = [fake_label_v,fake_label_v]
+    valid_label = [fake_label_v, fake_label_v]
+
     history = pretrain_model.fit(train_input, train_label,
                                  batch_size=batch_size,
                                  epochs=epochs, 
-                                 validation_data=(valid_input,valid_label), 
+                                 validation_data=(valid_input, valid_label), 
                                  shuffle='true', callbacks=[checkpointer])
 
     average_time_per_epoch = (time.time() - start_time) / epochs
@@ -225,7 +227,7 @@ def pretrain(config, dataset):
     pretrain_model.save(modelname)
     # test to know the accuracy of pretraining
     batch_size = 1024
-    model_test = model.baseline(num_words, embedding_matrix)
+    model_test = modelArch.baseline(num_words, embedding_matrix)
     model_test.load_weights(modelname, by_name=True)
     [loss1, rec1] = model_test.predict(valid_input,  batch_size=batch_size)
     print('predict res: loss:{} recall@1:{}'.format(np.mean(loss1), 
@@ -262,17 +264,17 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
     valid_data[1] = valid_data[1][0:valid_num]
     
     # load model architecture
-    SentenceEncoder = model.baseline(config, num_words, embedding_matrix)
+    SentenceEncoder = modelArch.baseline(config, num_words, embedding_matrix)
     try:
         SentenceEncoder.load_weights((config['savemodel'] + 
                                       'stage1_pretrain_' + 
-                                      config['general']['date'] + '.h5'), 
+                                      config['date'] + '.h5'), 
                                      by_name=True)
     except:
         # continue training even without pretrained model
-        print('stage 1 pretrained model does not exist. check!!!')
+        print('stage 1 pretrained model does not exist. check!!! continuing..')
 
-    filepath = "./tmp/stage1_vist_weights-{epoch:02d}.h5"
+    filepath = config['savemodel'] + "tmp/stage1_vist_weights-{epoch:02d}.h5"
     checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
                                                    monitor='val_loss', 
                                                    verbose=0,
@@ -372,10 +374,10 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix,
     train_image = utils_vist.getImgIds(traindir + 'train_image.csv')
 
     # Load Story Encoder model architecture
-    StoryEncoder = model.stage2(config, num_words, embedding_matrix)
+    StoryEncoder = modelArch.stage2(config, num_words, embedding_matrix)
     StoryEncoder.summary()
     
-    filepath = "./tmp/stage2_vist_weights-{epoch:02d}.h5"
+    filepath = config['savemodel'] + "tmp/stage2_vist_weights-{epoch:02d}.h5"
     checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
                                                    monitor='val_loss', 
                                                    verbose=0,
@@ -443,8 +445,8 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix,
             x_train1[BS * j:BS * (j + 1), :, :] = x_train[sampled_arr, :, :]
             y_train1[BS * j:BS * (j + 1), :, :] = y_train[sampled_arr, :, :]
             if modeltype == 'cnsi':
-                coh_train[BS * j:BS * (j + 1), :, :] = tempCoh[sampled_arr, :, 
-                                                               :]
+                coh_train[BS * j:BS * (j + 1),
+                          :, :] = tempCoh[sampled_arr, :, :]
             if j > (iterations - 100):
                 sampled_arr = list(set(sampled_arr) - ToNotDel)
             tempIDS[sampled_arr, 0] = -1
@@ -497,7 +499,7 @@ def test(config, modelname, test_data, num_words, embedding_matrix,
 
     trained_model = keras.models.load_model(
             modelname,
-            custom_objects={'orderEmb_loss': model.orderEmb_loss})
+            custom_objects={'orderEmb_loss': modelArch.orderEmb_loss})
     if modeltype == 'cnsi':
         out_fea = trained_model.predict([sent_test, sub_test_coh])
     else:

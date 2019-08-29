@@ -5,7 +5,8 @@ import numpy as np
 import math
 from load_data import loadData
 from configAll import create_config
-import model
+import modelArch
+import utils_vist
 
 #  make params global for use
 def init(param):
@@ -45,8 +46,8 @@ def train(params, num_words, embedding_matrix, train_data, valid_data):
     valid_data[1] = valid_data[1][0:valid_num]
     
     # load model architecture
-    model_base = model.baseline(num_words, embedding_matrix)
-    model_base.compile(loss=['mean_absolute_error', model.MyCustomLoss], 
+    model_base = modelArch.baseline(num_words, embedding_matrix)
+    model_base.compile(loss=['mean_absolute_error', utils_vist.MyCustomLoss], 
                        optimizer='adam', 
                        loss_weights=[1,0])
     model_base.summary()
@@ -132,7 +133,7 @@ def test(params, num_words, embedding_matrix, test_data):
     
     # load all data    
     test_batch = len(test_data[0])
-    model_test = model.baseline(num_words, embedding_matrix)
+    model_test = modelArch.baseline(num_words, embedding_matrix)
     model_test.load_weights('baseline_' + params['date'] + 
                             '.h5', by_name=True)
     [loss1, rec1] = model_test.predict(test_data,  batch_size=test_batch)
