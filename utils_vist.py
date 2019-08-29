@@ -8,6 +8,7 @@ import csv
 from keras import backend as K
 import tensorflow as tf
 import numpy as np
+from sklearn.preprocessing import normalize
 
 # read CSV file of image IDs
 def getImgIds(filename):
@@ -114,3 +115,35 @@ def edis_outputshape(input_shape):
     assert len(shape)==2
     outshape = (shape[0][0],1)
     return tuple(outshape)
+
+# to retrieve images given true, pred and imageids. 
+def retrieve_images(truevec, predvec, imageids):
+    
+    imageidx = []
+    y_true = []
+    for i in range(len(predvec)):
+        for j in range(5):
+            imageidx.append(imageids[i][j])
+            y_true.append(truevec[i][j])
+            
+    # remove identical images so that distance calculation is not repeated
+    _, mod_idx = np.unique(imageidx, axis=0, return_index=True)
+    mod_idx = mod_idx.tolist()
+    truenorm = normalize(np.abs(y_true[mod_idx, :]),norm='l2',axis=1) 
+    
+    predimageids = []
+    outtemp = []
+    for i in range(0, np.size(predvec, 0)):
+        for j in range(0, np.size(predvec, 1)):
+            prednorm = normalize(np.abs(predvec[i][j]).reshape(1, -1), 
+                                 norm='l2', axis=1)
+            error = np.subtract(prednorm, truenorm)
+            subtemp = np.sum(np.square(np.maximum(0, error)), axis=1)             
+#            temp1 = np.argpartition(subtemp, range(topk))
+#            idx = [imageidx[mod_idx[tmp]] for tmp in temp1[:topk]]
+            outtemp.append(imageidx[mod_idx[np.argmin(subtemp)]])  
+        predimageids.append(outtemp)      
+        outtemp = []
+        print('retrieved for {}/{} stories'.format(i, len(predvec)), end='\r')
+        
+    return predimageids

@@ -134,7 +134,7 @@ def orderEmb_loss(y_true, y_pred):
 # stage 1 of proposed model
 def stage1(config, num_words, embedding_matrix):
     
-    modconfig = config['MODEL_Sent_Img_PARAMS']
+    modconfig = config['stage1']
     # read config
     MAX_SEQUENCE_LENGTH = modconfig['maxseqlen']
     word_embed_dim = modconfig['wd_embd_dim']
@@ -180,7 +180,7 @@ def stage1(config, num_words, embedding_matrix):
 def stage2(config, num_words, embedding_matrix):
     
     # read config
-    modconfig = config['MODEL_Story_ImgSeq_PARAMS']
+    modconfig = config['stage2']
     hidden_size1 = modconfig['hidden_size1']
     hidden_size2 = modconfig['hidden_size2']
     hidden_size3 = modconfig['hidden_size3']

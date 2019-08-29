@@ -476,41 +476,68 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix,
     StoryEncoder.save(modelname)
     return StoryEncoder
 
-
+# code to predict and then retrieve images for input stories vist testing data
 def test(config, modelname, test_data, num_words, embedding_matrix, 
          modeltype='cnsi'):
-
+    
+    results = dict()
     testdir = config['datadir'] + 'test/'
     testinsamplename = config['testsamples']
     predictions = config['savepred']
+    test_sents = utils_vist.getSent(testdir + 'test_text.csv')
 
-    x_test, y_test = get_sent_img_feats_stage1(test_data, num_words,
-                                               embedding_matrix)
-    test_lines = [line.rstrip('\n') for line in open(testinsamplename)]
+    # get sentence and image vectors from stage 1
+    x_test, y_test = get_sent_img_feats_stage1(config, 
+                                               [test_data[0], test_data[1]], 
+                                               num_words, embedding_matrix)
+    test_lines = [line.rstrip('\n') for line in open(testinsamplename, 'r', 
+                                                     encoding='utf-8')]
     if modeltype == 'cnsi':
         coh_sent_test = np.expand_dims(np.load(testdir + 'cohvec_test.npy'), 
                                        axis=1)
-
-    sent_test200 = []
+    # get input and gt ready
+    test_sent = []
+    test_imgids = []
+    test_vecs = []
+    test_stories = []
     for ind in test_lines:
         ind = int(ind)
-        sent_test200.append(x_test[0][ind])
-    sent_test = np.array(sent_test200)
+        test_sent.append(x_test[0][ind])
+        test_imgids.append(test_data[2][ind])
+        test_vecs.append(y_test[ind])
+        test_stories.append(test_sents[ind])
+    test_sent = np.array(test_sent)
+    test_imgids = np.array(test_imgids)
+    test_vecs = np.array(test_vecs)
     if modeltype == 'cnsi':
-        sub_test_coh = coh_sent_test[test_lines, :, :]
-        sub_test_coh = np.repeat(sub_test_coh, 5, axis=1)
+        coh_sent_test = coh_sent_test[test_lines, :, :]
+        coh_sent_test = np.repeat(coh_sent_test, 5, axis=1)
 
+    # load model and predict
     trained_model = keras.models.load_model(
             modelname,
             custom_objects={'orderEmb_loss': modelArch.orderEmb_loss})
     if modeltype == 'cnsi':
-        out_fea = trained_model.predict([sent_test, sub_test_coh])
+        out_fea = trained_model.predict([test_sent, coh_sent_test])
     else:
-        out_fea = trained_model.predict(sent_test)
+        out_fea = trained_model.predict(test_sent)
+        
+    # save predictions
     with open(predictions, 'wb') as fp:
         pickle.dump(out_fea, fp)
     
-    return True
+    # retrieving images for input stories
+    finalpreds = utils_vist.retrieve_images(test_vecs, out_fea, test_data[2])
+    
+    # saving result dictionary
+    
+    results['input_stories'] = test_stories
+    results['test_samples'] = test_lines
+    results['test_gt_imageids'] = test_imgids
+    results['test_pred_imageids'] = finalpreds
+    
+    pickle.dump(results, open('results' + config['date'] + '.pickle', 'wb'))
+    return results
 
 
 def main(config, process, modeltype='cnsi', model2test=None):
