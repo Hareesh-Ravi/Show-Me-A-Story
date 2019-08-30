@@ -38,6 +38,8 @@ def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
     labels_temp = []
     feat = []
     labels = []
+    tot = len(data[0]) / num_sents
+    k = 1
     for i in range(0, len(data[0]), num_sents):
         for j in range(0, num_sents):
             ind = i + j
@@ -49,7 +51,9 @@ def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
         labels.append(labels_temp)
         feat_temp = []
         labels_temp = []
-
+        print('obtained stage1 feats for {}/{} stories'.format(k, tot), 
+              end='\r')
+        k += 1
     return feat, labels
 
 # preprocessing for pretraining model
@@ -226,7 +230,8 @@ def pretrain(config, dataset):
     pretrain_model.save(modelname)
     # test to know the accuracy of pretraining
     batch_size = 1024
-    model_test = modelArch.baseline(num_words, embedding_matrix)
+    model_test = modelArch.baseline(config['pretrain'], num_words, 
+                                    embedding_matrix)
     model_test.load_weights(modelname, by_name=True)
     [loss1, rec1] = model_test.predict(valid_input,  batch_size=batch_size)
     print('predict res: loss:{} recall@1:{}'.format(np.mean(loss1), 
@@ -502,7 +507,7 @@ def test(config, modelname, test_data, num_words, embedding_matrix,
     test_stories = []
     for ind in test_lines:
         ind = int(ind)
-        test_sent.append(x_test[0][ind])
+        test_sent.append(x_test[ind])
         test_imgids.append(test_data[2][ind])
         test_vecs.append(y_test[ind])
         test_stories.append(test_sents[ind])
@@ -510,13 +515,13 @@ def test(config, modelname, test_data, num_words, embedding_matrix,
     test_imgids = np.array(test_imgids)
     test_vecs = np.array(test_vecs)
     if modeltype == 'cnsi':
-        coh_sent_test = coh_sent_test[test_lines, :, :]
+        coh_sent_test = coh_sent_test[np.array(test_lines).astype(int), :, :]
         coh_sent_test = np.repeat(coh_sent_test, 5, axis=1)
 
     # load model and predict
     trained_model = keras.models.load_model(
             modelname,
-            custom_objects={'orderEmb_loss': modelArch.orderEmb_loss})
+            custom_objects={'CustomLossIm2Txt': modelArch.CustomLossIm2Txt})
     if modeltype == 'cnsi':
         out_fea = trained_model.predict([test_sent, coh_sent_test])
     else:

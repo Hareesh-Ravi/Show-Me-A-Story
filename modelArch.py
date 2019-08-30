@@ -81,7 +81,7 @@ def baseline(modconfig, num_words, embedding_matrix):
     return baselinemodel
 
 # sequential order embedding loss function
-def orderEmb_loss(y_true, y_pred):
+def CustomLossIm2Txt(y_true, y_pred):
     y_true = K.l2_normalize(K.abs(y_true), axis=2)
     y_pred = K.l2_normalize(K.abs(y_pred), axis=2)
     y_truemod = K.expand_dims(y_true, axis=0)
@@ -136,7 +136,7 @@ def stage1(config, num_words, embedding_matrix):
     
     modconfig = config['stage1']
     # read config
-    MAX_SEQUENCE_LENGTH = modconfig['maxseqlen']
+    MAX_SEQUENCE_LENGTH = modconfig['MAX_SEQUENCE_LENGTH']
     word_embed_dim = modconfig['wd_embd_dim']
     sent_feat_dim = modconfig['sent_fea_dim']
     img_feat_dim = modconfig['img_fea_dim']
