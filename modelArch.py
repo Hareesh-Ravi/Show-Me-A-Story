@@ -27,6 +27,7 @@ def baseline(modconfig, num_words, embedding_matrix):
                                 word_embd_dim,
                                 weights=[embedding_matrix],
                                 input_length=MAX_SEQUENCE_LENGTH,
+                                name='wd_embedding_layer',
                                 trainable=False)
 
     input_sent = Input(shape=(MAX_SEQUENCE_LENGTH,), dtype='int32', 
@@ -73,6 +74,7 @@ def baseline(modconfig, num_words, embedding_matrix):
 
     baselinemodel = Model(inputs=[input_sent, input_img], 
                           outputs=[main_output, acc_output])
+    baselinemodel.get_layer('wd_embedding_layer').trainable = False
     baselinemodel.compile(loss=['mean_absolute_error', 
                                  utils_vist.MyCustomLoss], 
                            optimizer='adam', 
@@ -168,6 +170,8 @@ def stage1(config, num_words, embedding_matrix):
 
     sentence_model = Model(inputs=[input_sent, input_img], outputs=[
             Encode_sent_normed, Encode_img_normed])
+        
+    sentence_model.get_layer('vist_wd_embedding_layer').trainable = False
     
     sentence_model.compile(loss=['mean_absolute_error', 
                                  utils_vist.MyCustomLoss], 

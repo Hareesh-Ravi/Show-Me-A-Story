@@ -14,7 +14,7 @@ def create_config():
     # model can be 'nsi', 'cnsi' or 'baseline'
     config['model'] = 'cnsi'
     # replace the below date to match trained models for evaluation
-    config['date'] = time.strftime("%y-%m-%d")
+    config['date'] = time.strftime("%Y-%m-%d")
     config['datadir'] = './data/'
 
     # filenames

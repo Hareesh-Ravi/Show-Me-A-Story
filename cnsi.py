@@ -202,7 +202,7 @@ def pretrain(config, dataset):
 
     pretrain_model = modelArch.baseline(config['pretrain'], num_words, 
                                         embedding_matrix)
-    
+    raise ValueError()
     filepath = config['savemodel'] + "tmp/stage1_pretrain_coco-{epoch:02d}.h5"
     checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
                                                    monitor='val_loss', 
@@ -275,7 +275,8 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
                                       'stage1_pretrain_' + 
                                       config['date'] + '.h5'), 
                                      by_name=True)
-    except:
+        print('stage 1 pretrained model loaded..')
+    except FileNotFoundError:
         # continue training even without pretrained model
         print('stage 1 pretrained model does not exist. check!!! continuing..')
 
