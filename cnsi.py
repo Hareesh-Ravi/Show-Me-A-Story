@@ -196,13 +196,11 @@ def pretrain(config, dataset):
                                                         np.shape(sent_widx_v)))
     # Compile and train different models while measuring performance.
     results = []
-    # for mode in modes:
-    mode = 1
-    print('Testing mode: implementation={}'.format(mode))
 
     pretrain_model = modelArch.baseline(config['pretrain'], num_words, 
                                         embedding_matrix)
-    raise ValueError()
+    for l in pretrain_model.layers:
+        print('layer name: {}, trainable: {}'.format(l.name, str(l.trainable)))
     filepath = config['savemodel'] + "tmp/stage1_pretrain_coco-{epoch:02d}.h5"
     checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
                                                    monitor='val_loss', 
@@ -275,6 +273,7 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
                                       'stage1_pretrain_' + 
                                       config['date'] + '.h5'), 
                                      by_name=True)
+#        SentenceEncoder.load_weights('./TrainedModels/stage1_pretrain_coco-03.h5', by_name=True)
         print('stage 1 pretrained model loaded..')
     except FileNotFoundError:
         # continue training even without pretrained model

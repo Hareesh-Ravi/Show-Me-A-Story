@@ -14,6 +14,7 @@ from keras import optimizers
 from keras import backend as K
 import tensorflow as tf
 import utils_vist
+from keras.initializers import Constant
 
 # network architecture for baseline experiment
 def baseline(modconfig, num_words, embedding_matrix):
@@ -25,7 +26,7 @@ def baseline(modconfig, num_words, embedding_matrix):
     img_feat_dim = modconfig['img_fea_dim']
     embedding_layer = Embedding(num_words,
                                 word_embd_dim,
-                                weights=[embedding_matrix],
+                                embeddings_initializer=Constant(embedding_matrix),
                                 input_length=MAX_SEQUENCE_LENGTH,
                                 name='wd_embedding_layer',
                                 trainable=False)
@@ -74,7 +75,7 @@ def baseline(modconfig, num_words, embedding_matrix):
 
     baselinemodel = Model(inputs=[input_sent, input_img], 
                           outputs=[main_output, acc_output])
-    baselinemodel.get_layer('wd_embedding_layer').trainable = False
+    baselinemodel.layers[1].trainable = False
     baselinemodel.compile(loss=['mean_absolute_error', 
                                  utils_vist.MyCustomLoss], 
                            optimizer='adam', 
@@ -145,7 +146,7 @@ def stage1(config, num_words, embedding_matrix):
 
     embedding_layer = Embedding(num_words,
                                 word_embed_dim,
-                                weights=[embedding_matrix],
+                                embeddings_initializer=Constant(embedding_matrix),
                                 input_length=MAX_SEQUENCE_LENGTH,
                                 name='vist_wd_embedding_layer',
                                 trainable=False)
