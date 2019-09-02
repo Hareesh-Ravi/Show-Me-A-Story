@@ -75,7 +75,6 @@ def baseline(modconfig, num_words, embedding_matrix):
 
     baselinemodel = Model(inputs=[input_sent, input_img], 
                           outputs=[main_output, acc_output])
-    baselinemodel.layers[1].trainable = False
     baselinemodel.compile(loss=['mean_absolute_error', 
                                  utils_vist.MyCustomLoss], 
                            optimizer='adam', 
@@ -84,7 +83,7 @@ def baseline(modconfig, num_words, embedding_matrix):
     return baselinemodel
 
 # sequential order embedding loss function
-def CustomLossIm2Txt(y_true, y_pred):
+def orderEmb_loss(y_true, y_pred):
     y_true = K.l2_normalize(K.abs(y_true), axis=2)
     y_pred = K.l2_normalize(K.abs(y_pred), axis=2)
     y_truemod = K.expand_dims(y_true, axis=0)

@@ -97,13 +97,16 @@ def preProBuildWordVocab(config, sentence_iterator, word_count_threshold):
     embedding_matrix = np.zeros((num_words, wd_embd_dim))
     ix = 1
     for w in vocab:
-        wordtoix[w] = ix
-        ixtoword[ix] = w
-        embedding_vector = embeddings_index.get(w)
-        if embedding_vector is not None:
-          # words not found in embedding index will be all-zeros.
-          embedding_matrix[ix] = embedding_vector
-        ix += 1
+        if ix < num_words:
+            wordtoix[w] = ix
+            ixtoword[ix] = w
+            embedding_vector = embeddings_index.get(w)
+            if embedding_vector is not None:
+              # words not found in embedding index will be all-zeros.
+              embedding_matrix[ix] = embedding_vector
+            ix += 1
+        else:
+            continue
       # prepare embedding matrix
 
     word_counts['.'] = nsents
@@ -273,20 +276,10 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
                                       'stage1_pretrain_' + 
                                       config['date'] + '.h5'), 
                                      by_name=True)
-#        SentenceEncoder.load_weights('./TrainedModels/stage1_pretrain_coco-03.h5', by_name=True)
         print('stage 1 pretrained model loaded..')
     except FileNotFoundError:
         # continue training even without pretrained model
         print('stage 1 pretrained model does not exist. check!!! continuing..')
-
-    filepath = config['savemodel'] + "tmp/stage1_vist_weights-{epoch:02d}.h5"
-    checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
-                                                   monitor='val_loss', 
-                                                   verbose=0,
-                                                   save_best_only=False, 
-                                                   save_weights_only=False, 
-                                                   mode='auto', 
-                                                   period=1)
     
     start_time = time.time()
     results = []
@@ -344,6 +337,15 @@ def trainstage1(config, train_data, valid_data, num_words, embedding_matrix):
             
         train_input = [xtrain, ytrain]
         val_input = [x_val, y_val]
+        filepath = (config['savemodel'] + "tmp/stage1_vist_weights-" + 
+                    "{03d}".format(i) + ".h5")
+        checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
+                                                       monitor='val_loss', 
+                                                       verbose=0,
+                                                       save_best_only=False, 
+                                                       save_weights_only=False, 
+                                                       mode='auto', 
+                                                       period=1)
         history = SentenceEncoder.fit(train_input, train_label,
                                       validation_data = (val_input, 
                                                          valid_label), 
@@ -373,8 +375,8 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix,
     if modeltype == 'cnsi':
         coh_sent_train = np.expand_dims(np.load(traindir + 
                                                 'cohvec_train.npy'), axis=1)
-        coh_sent_val = np.expand_dims(np.load(valdir + 
-                                                'cohvec_val.npy'), axis=1)
+#        coh_sent_val = np.expand_dims(np.load(valdir + 
+#                                                'cohvec_val.npy'), axis=1)
     
     # load train image IDs
     train_image = utils_vist.getImgIds(traindir + 'train_image.csv')
@@ -383,31 +385,23 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix,
     StoryEncoder = modelArch.stage2(config, num_words, embedding_matrix)
     StoryEncoder.summary()
     
-    filepath = config['savemodel'] + "tmp/stage2_vist_weights-{epoch:02d}.h5"
-    checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
-                                                   monitor='val_loss', 
-                                                   verbose=0,
-                                                   save_best_only=False, 
-                                                   save_weights_only=False, 
-                                                   mode='auto', 
-                                                   period=1)
-    
     # get sentence vectors for training and validation data
-    x_train, y_train = get_sent_img_feats_stage1(config['stage1'], 
-                                                 train_data, num_words,
+    x_train, y_train = get_sent_img_feats_stage1(config, 
+                                                 [train_data[0], 
+                                                  train_data[1]], num_words,
                                                  embedding_matrix)
-    
-    x_val, y_val = get_sent_img_feats_stage1(config['stage1'], 
-                                             valid_data, num_words,
-                                             embedding_matrix)
+#    
+#    x_val, y_val = get_sent_img_feats_stage1(config['stage1'], 
+#                                             valid_data, num_words,
+#                                             embedding_matrix)
 
     NumTrain = math.floor(np.size(x_train, 0)/BS) * BS
     x_train = np.array(x_train[0:NumTrain][:][:])
     y_train = np.array(y_train[0:NumTrain][:][:])
     
-    NumVal = math.floor(np.size(x_val, 0)/BS) * BS
-    x_val = np.array(x_val[0:NumVal][:][:])
-    y_val = np.array(y_val[0:NumVal][:][:])
+#    NumVal = math.floor(np.size(x_val, 0)/BS) * BS
+#    x_val = np.array(x_val[0:NumVal][:][:])
+#    y_val = np.array(y_val[0:NumVal][:][:])
     
     start_time = time.time()
     results = []
@@ -416,8 +410,8 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix,
         tempIDS = np.array(list(train_image))
         tempIDS = tempIDS[0:NumTrain, :]
         if modeltype == 'cnsi':
-            tempvalcoh = coh_sent_val[0:NumVal, :]
-            tempvalcoh = np.repeat(tempvalcoh, 5, axis=1)
+#            tempvalcoh = coh_sent_val[0:NumVal, :]
+#            tempvalcoh = np.repeat(tempvalcoh, 5, axis=1)
             tempCoh = coh_sent_train[0:NumTrain, :]
             coh_train = np.zeros((NumTrain, 5, cohfeatdim))
             tempCoh = np.repeat(tempCoh, 5, axis=1)
@@ -459,16 +453,26 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix,
                 sampled_arr = list(set(sampled_arr) - ToNotDel)
             tempIDS[sampled_arr, 0] = -1
             p[sampled_arr] = -1
+        
+        filepath = (config['savemodel'] + "tmp/stage2_vist_weights-" + 
+                    "{03d}".format(i) + ".h5")
+        checkpointer = keras.callbacks.ModelCheckpoint(filepath, 
+                                                       monitor='val_loss', 
+                                                       verbose=0,
+                                                       save_best_only=False, 
+                                                       save_weights_only=False, 
+                                                       mode='auto', 
+                                                       period=1)
         if modeltype == 'cnsi':
             history = StoryEncoder.fit([x_train1, coh_train], y_train1, 
-                                       validation_data = ([x_val, tempvalcoh],  
-                                                          y_val), 
+#                                       validation_data = ([x_val, tempvalcoh],  
+#                                                          y_val), 
                                        epochs=1,
                                        batch_size=BS, verbose=1, 
                                        callbacks=[checkpointer])
         else:
             history = StoryEncoder.fit(x_train1, y_train1, 
-                                       validation_data = (x_val, y_val), 
+#                                       validation_data = (x_val, y_val), 
                                        epochs=1,
                                        batch_size=BS, verbose=1, 
                                        callbacks=[checkpointer])
@@ -521,7 +525,7 @@ def test(config, modelname, test_data, num_words, embedding_matrix,
     # load model and predict
     trained_model = keras.models.load_model(
             modelname,
-            custom_objects={'CustomLossIm2Txt': modelArch.CustomLossIm2Txt})
+            custom_objects={'CustomLossIm2Txt': modelArch.orderEmb_loss})
     if modeltype == 'cnsi':
         out_fea = trained_model.predict([test_sent, coh_sent_test])
     else:

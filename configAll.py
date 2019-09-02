@@ -38,7 +38,7 @@ def create_config():
     config['stage1'] = dict()
     config['stage1']['MAX_SEQUENCE_LENGTH'] = 100
     config['stage1']['img_fea_dim'] = 4096
-    config['stage1']['MAX_NB_WORDS'] = 26500
+    config['stage1']['MAX_NB_WORDS'] = 26000
     config['stage1']['wd_embd_dim'] = 300
     config['stage1']['sent_fea_dim'] = 1024
     config['stage1']['batchsize'] = 128
