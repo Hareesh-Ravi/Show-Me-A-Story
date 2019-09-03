@@ -62,12 +62,15 @@ Story Illustration is the problem of retrieving/generating a sequence of images,
      - modify `testgrid_path = /absolute-path-to/browncoherence/bin64/TestGrid` in [entity_score.py](./coherence_vector/entity_score.py)
      - `cd ..` and `sudo cp -r ./browncoherence/data ./browoncoherence/data/bin64/`
 
+- Download COCO image features and splits as provided by https://github.com/ivendrov/order-embedding and https://github.com/karpathy/neuraltalk from [here](https://drive.google.com/open?id=1hc_Q1nF5rTBqNJNWCoYtK01axQhfAMgX) and put them inside [./data](./data/)
+
 ## To run codes on VIST data
 Parameters for all processes below can be modified in `config.json`. If no file is present, `config.json` is created by `configAll.py` and hence might be valuable to change there as well.
 1. preprocessing
     - `python run.py --preprocess data` to get data files ready
     - `python run.py --preprocess imagefeatures` to get VGG16 features for all images in the data. NOTE: This code also removes stories that do not have images.
     - `python run.py --preprocess coherencevectors` to extract coherence vectors for all stories (has to be run after image features are extracted)
+    - NOTE: You can SKIP all the above preprocessing steps by downloading preprocessed files from [here](https://drive.google.com/open?id=1hc_Q1nF5rTBqNJNWCoYtK01axQhfAMgX). Extract the folders and files inside [./data/](./data/). This has coherence vectors, VIST processed data and its images features extracted using VGG16 and was part of our paper. 
 2. training
     - `python run.py --pretrain` will train stage 1 model on MS COCO dataset. 
     - `python run.py --train stage1` will train stage 1 model on VIST dataset.  
