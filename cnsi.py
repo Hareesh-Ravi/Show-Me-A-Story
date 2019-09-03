@@ -18,6 +18,7 @@ import time
 from keras.preprocessing import sequence
 import os
 from data_provider_mscoco import getDataProvider
+import pdb
 
 # get sentence vectors using stage 1 of trained network
 def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
@@ -30,14 +31,17 @@ def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
     SentEncoder.load_weights(model_path, by_name=True)
 
     # Extract Sent and Img features using sent encoder
-    [encoded_sents, encoded_imgs] = SentEncoder.predict(data, batch_size=128)
+    [encoded_sents, encoded_imgs] = SentEncoder.predict([data[0], data[1]], 
+                                                        batch_size=128)
     
     # get stories and corresponding groud truth images in story x seq format
     num_sents = 5
     feat_temp = []
     labels_temp = []
+    ids_temp = []
     feat = []
     labels = []
+    ids = []
     tot = len(data[0]) / num_sents
     k = 1
     for i in range(0, len(data[0]), num_sents):
@@ -47,14 +51,17 @@ def get_sent_img_feats_stage1(config, data, num_words, embedding_matrix):
             feat_temp.append(sent)
             img = encoded_imgs[ind]
             labels_temp.append(img)
+            ids_temp.append(data[2][ind])
         feat.append(feat_temp)
         labels.append(labels_temp)
+        ids.append(ids_temp)
         feat_temp = []
         labels_temp = []
+        ids_temp = []
         print('obtained stage1 feats for {}/{} stories'.format(k, tot), 
               end='\r')
         k += 1
-    return feat, labels
+    return feat, labels, ids
 
 # preprocessing for pretraining model
 def preProBuildWordVocab(config, sentence_iterator, word_count_threshold):
@@ -386,10 +393,9 @@ def trainstage2(config, train_data, valid_data, num_words, embedding_matrix,
     StoryEncoder.summary()
     
     # get sentence vectors for training and validation data
-    x_train, y_train = get_sent_img_feats_stage1(config, 
-                                                 [train_data[0], 
-                                                  train_data[1]], num_words,
-                                                 embedding_matrix)
+    x_train, y_train, imgids = get_sent_img_feats_stage1(config, 
+                                                         train_data, num_words,
+                                                         embedding_matrix)
 #    
 #    x_val, y_val = get_sent_img_feats_stage1(config['stage1'], 
 #                                             valid_data, num_words,
@@ -496,36 +502,40 @@ def test(config, modelname, test_data, num_words, embedding_matrix,
     test_sents = utils_vist.getSent(testdir + 'test_text.csv')
 
     # get sentence and image vectors from stage 1
-    x_test, y_test = get_sent_img_feats_stage1(config, 
-                                               [test_data[0], test_data[1]], 
-                                               num_words, embedding_matrix)
+    print('obtaining sent and image vectors from stage 1...')
+    x_test, y_test, id_test = get_sent_img_feats_stage1(config, test_data, 
+                                                        num_words, 
+                                                        embedding_matrix)
+
     test_lines = [line.rstrip('\n') for line in open(testinsamplename, 'r', 
                                                      encoding='utf-8')]
     if modeltype == 'cnsi':
         coh_sent_test = np.expand_dims(np.load(testdir + 'cohvec_test.npy'), 
                                        axis=1)
     # get input and gt ready
+    print('gettin input and coherence vectors ready..')
     test_sent = []
     test_imgids = []
-    test_vecs = []
+#    test_vecs = []
     test_stories = []
     for ind in test_lines:
         ind = int(ind)
         test_sent.append(x_test[ind])
-        test_imgids.append(test_data[2][ind])
-        test_vecs.append(y_test[ind])
+        test_imgids.append(id_test[ind][:])
+#        test_vecs.append(y_test[ind])
         test_stories.append(test_sents[ind])
     test_sent = np.array(test_sent)
     test_imgids = np.array(test_imgids)
-    test_vecs = np.array(test_vecs)
+#    test_vecs = np.array(test_vecs)
     if modeltype == 'cnsi':
         coh_sent_test = coh_sent_test[np.array(test_lines).astype(int), :, :]
         coh_sent_test = np.repeat(coh_sent_test, 5, axis=1)
 
     # load model and predict
+    print('predicting using stage 2...')
     trained_model = keras.models.load_model(
             modelname,
-            custom_objects={'CustomLossIm2Txt': modelArch.orderEmb_loss})
+            custom_objects={'orderEmb_loss': modelArch.orderEmb_loss})
     if modeltype == 'cnsi':
         out_fea = trained_model.predict([test_sent, coh_sent_test])
     else:
@@ -536,7 +546,8 @@ def test(config, modelname, test_data, num_words, embedding_matrix,
         pickle.dump(out_fea, fp)
     
     # retrieving images for input stories
-    finalpreds = utils_vist.retrieve_images(test_vecs, out_fea, test_data[2])
+    finalpreds = utils_vist.retrieve_images(np.array(y_test), out_fea, 
+                                            np.array(id_test))
     
     # saving result dictionary
     

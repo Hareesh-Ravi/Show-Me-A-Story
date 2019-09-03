@@ -112,8 +112,6 @@ if __name__ == '__main__':
         # get predictions for stories from testsamples for cnsi model
         model2test =  (configs['savemodel'] + 'stage2_cnsi_' + 
                        configs['date'] + '.h5')
-        model2test = (configs['savemodel'] + 
-                      'Stage2_Oct09_3GRU1Dense_CohCat_NoDrop.h5')
         cnsi.main(configs, 'test', 'cnsi', model2test)
     elif args.eval == 'nsi':
         # get predictions for stories from testsamples for nsi model

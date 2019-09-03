@@ -119,17 +119,14 @@ def edis_outputshape(input_shape):
 # to retrieve images given true, pred and imageids. 
 def retrieve_images(truevec, predvec, imageids):
     
-    imageidx = []
-    y_true = []
-    for i in range(len(predvec)):
-        for j in range(5):
-            imageidx.append(imageids[i][j])
-            y_true.append(truevec[i][j])
+    no_of_stories, no_of_images, no_of_feats = np.shape(truevec)
+    imageidx = imageids.reshape([no_of_stories*no_of_images, 1])
+    y_true = truevec.reshape([no_of_stories*no_of_images, no_of_feats])
             
     # remove identical images so that distance calculation is not repeated
     _, mod_idx = np.unique(imageidx, axis=0, return_index=True)
-    mod_idx = mod_idx.tolist()
-    truenorm = normalize(np.abs(y_true[mod_idx, :]),norm='l2',axis=1) 
+#    mod_idx = mod_idx.tolist()
+    truenorm = normalize(np.abs(y_true[mod_idx]), norm='l2', axis=1) 
     
     predimageids = []
     outtemp = []
