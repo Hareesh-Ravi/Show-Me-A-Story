@@ -11,7 +11,14 @@ Story Illustration is the problem of retrieving/generating a sequence of images,
   1. Download dataset from http://visionandlanguage.net/VIST/dataset.html
   2. Put sis (text) , dii (text) and images folder inside [./data/raw](./data/raw)
   3. Download glove_6B_300 dim vectors from https://nlp.stanford.edu/projects/glove/ and put it in [./data/](./data/) folder
-  4. `conda create --name <env> --file requirements.txt` (This is an extensive list that might include unnecessary packages as well. But basically python, tensorflow-gpu, keras, pandas, pillow and numpy are the main packages necessary to run the code)
+  4. `conda create --name <env> --file requirements.txt` (This is an extensive list that might include unnecessary packages as well. But basically following are the main packages necessary to run the code. Install the latest version using conda install)
+     - python
+     - tensorflow-gpu
+     - keras 
+     - pandas
+     - pillow 
+     - numpy
+     - pycorenlp
 
 - For the coherence vector (Works only in Linux. Let us know if you make it work in Windows)
 
