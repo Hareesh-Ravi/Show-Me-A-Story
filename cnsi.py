@@ -516,17 +516,14 @@ def test(config, modelname, test_data, num_words, embedding_matrix,
     print('gettin input and coherence vectors ready..')
     test_sent = []
     test_imgids = []
-#    test_vecs = []
     test_stories = []
     for ind in test_lines:
         ind = int(ind)
         test_sent.append(x_test[ind])
         test_imgids.append(id_test[ind][:])
-#        test_vecs.append(y_test[ind])
         test_stories.append(test_sents[ind])
     test_sent = np.array(test_sent)
     test_imgids = np.array(test_imgids)
-#    test_vecs = np.array(test_vecs)
     if modeltype == 'cnsi':
         coh_sent_test = coh_sent_test[np.array(test_lines).astype(int), :, :]
         coh_sent_test = np.repeat(coh_sent_test, 5, axis=1)
@@ -556,7 +553,8 @@ def test(config, modelname, test_data, num_words, embedding_matrix,
     results['test_gt_imageids'] = test_imgids
     results['test_pred_imageids'] = finalpreds
     
-    pickle.dump(results, open('results' + config['date'] + '.pickle', 'wb'))
+    pickle.dump(results, open('results_' + modeltype + '_' + config['date'] + 
+                              '.pickle', 'wb'))
     return results
 
 

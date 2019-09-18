@@ -105,7 +105,7 @@ if __name__ == '__main__':
                          'nsi or baseline only')
     
     '''
-    To evaluate 'model' on VIST test set. Thiw will save predictions in file
+    To evaluate 'model' on VIST test set. This will save predictions in file
     for further use by metrics. Will not print or show any results.
     '''
     if args.eval == 'cnsi':
@@ -129,22 +129,23 @@ if __name__ == '__main__':
     
     
     '''
-    To evaluate 'model' on VIST test set. Thiw will save predictions in file
+    To evaluate 'model' on VIST test set. This will save predictions in file
     for further use by metrics. Will not print or show any results.
     '''
     if args.show == 'cnsi':
         # get predictions for stories from testsamples for cnsi model
-        model2test =  (configs['savemodel'] + 'stage2_cnsi_' + 
-                       configs['date'] + '.h5')
-        cnsi.main(configs, 'test', 'cnsi', model2test)
+        results2show =  ('results_cnsi_' + configs['date'] + '.pickle')
+        cnsi.main(configs, 'show', 'cnsi', results2show)
+        
     elif args.show == 'nsi':
         # get predictions for stories from testsamples for nsi model
-        model2test =  (configs['savemodel'] + 'stage2_nsi_' + 
-                       configs['date'] + '.h5')
-        cnsi.main(configs, 'test', 'nsi', model2test)
+        model2test =  ('results_nsi_' + configs['date'] + '.pickle')
+        cnsi.main(configs, 'show', 'nsi', model2test)
+        
     elif args.show == 'baseline':
         # get predictions for stories from testsamples for baseline model
-        baseline.main(configs, 'test')
+        baseline.main(configs, 'show')
+        
     elif not args.show:
         pass
     else:

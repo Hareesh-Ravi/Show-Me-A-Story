@@ -7,6 +7,7 @@ from load_data import loadData
 from configAll import create_config
 import modelArch
 import utils_vist
+import pickle
 
 #  make params global for use
 def init(param):
@@ -22,6 +23,49 @@ def init(param):
     epochs = param['epochs']  
     global MAX_SEQUENCE_LENGTH
     MAX_SEQUENCE_LENGTH = param['MAX_SEQUENCE_LENGTH']
+
+# get sentence vectors using stage 1 of trained network
+def get_sent_img_feats_baseline(config, data, num_words, embedding_matrix):
+
+    # Load Sentence encoder and initialize it's weights
+    model_path = (config['savemodel'] + 'baseline_' + 
+                  config['date'] + '.h5')
+    print('model:{}'.format(model_path))
+    baselinemodel = modelArch.stage1(config, num_words, embedding_matrix)
+    baselinemodel.load_weights(model_path, by_name=True)
+
+    # Extract Sent and Img features using sent encoder
+    [encoded_sents, encoded_imgs] = baselinemodel.predict([data[0], data[1]], 
+                                                          batch_size=128)
+    
+    # get stories and corresponding groud truth images in story x seq format
+    num_sents = 5
+    feat_temp = []
+    labels_temp = []
+    ids_temp = []
+    feat = []
+    labels = []
+    ids = []
+    tot = len(data[0]) / num_sents
+    k = 1
+    for i in range(0, len(data[0]), num_sents):
+        for j in range(0, num_sents):
+            ind = i + j
+            sent = encoded_sents[ind]
+            feat_temp.append(sent)
+            img = encoded_imgs[ind]
+            labels_temp.append(img)
+            ids_temp.append(data[2][ind])
+        feat.append(feat_temp)
+        labels.append(labels_temp)
+        ids.append(ids_temp)
+        feat_temp = []
+        labels_temp = []
+        ids_temp = []
+        print('obtained stage1 feats for {}/{} stories'.format(k, tot), 
+              end='\r')
+        k += 1
+    return feat, labels, ids
 
 # train baseline on VIST dataset
 def train(params, num_words, embedding_matrix, train_data, valid_data):   
@@ -129,24 +173,66 @@ def train(params, num_words, embedding_matrix, train_data, valid_data):
                     params['date'] + '.h5')
     return model_base
  
-def test(params, num_words, embedding_matrix, test_data):
+def test(config, num_words, embedding_matrix, test_data):
     
-    # load all data    
-    test_batch = len(test_data[0])
-    model_test = modelArch.baseline(num_words, embedding_matrix)
-    model_test.load_weights('baseline_' + params['date'] + 
-                            '.h5', by_name=True)
-    [loss1, rec1] = model_test.predict(test_data,  batch_size=test_batch)
-    print('predict res: loss:{} recall@1:{}'.format(np.mean(loss1), 
-                                                    np.mean(rec1)))
+    # load all data  
+    results = dict()
+    testdir = config['datadir'] + 'test/'
+    testinsamplename = config['testsamples']
+    predictions = config['savepred']
+    test_sents = utils_vist.getSent(testdir + 'test_text.csv')
+
+    # get sentence and image vectors from stage 1
+    print('obtaining sent and image vectors from stage 1...')
+    x_test, y_test, id_test = get_sent_img_feats_baseline(config, test_data, 
+                                                          num_words, 
+                                                          embedding_matrix)
+
+    test_lines = [line.rstrip('\n') for line in open(testinsamplename, 'r', 
+                                                     encoding='utf-8')]
+#    test_batch = len(test_data[0])
+#    model_test = modelArch.baseline(num_words, embedding_matrix)
+#    model_test.load_weights('baseline_' + params['date'] + 
+#                            '.h5', by_name=True)
+#    [loss1, rec1] = model_test.predict(test_data,  batch_size=test_batch)
+#    print('predict res: loss:{} recall@1:{}'.format(np.mean(loss1), 
+#                                                    np.mean(rec1)))
+    # get input and gt ready
+    print('gettin input and coherence vectors ready..')
+    test_sent = []
+    test_imgids = []
+    test_stories = []
+    for ind in test_lines:
+        ind = int(ind)
+        test_sent.append(x_test[ind])
+        test_imgids.append(id_test[ind][:])
+        test_stories.append(test_sents[ind])
+    test_sent = np.array(test_sent)
+    test_imgids = np.array(test_imgids)
+    
+    # save predictions
+    with open(predictions, 'wb') as fp:
+        pickle.dump(test_sent, fp)
+        
+    # retrieving images for input stories
+    finalpreds = utils_vist.retrieve_images(np.array(y_test), 
+                                            np.array(test_sent), 
+                                            np.array(id_test))
+    
+    # saving result dictionary
+    
+    results['input_stories'] = test_stories
+    results['test_samples'] = test_lines
+    results['test_gt_imageids'] = test_imgids
+    results['test_pred_imageids'] = finalpreds
+    
+    pickle.dump(results, open('results_baseline_' + config['date'] + 
+                              '.pickle', 'wb'))
+    return results
+
+def show():
     
     return True
-
-def evaluate(params):
-    
-    
-    return True
-
 
 def main(config, process):
     
@@ -164,8 +250,8 @@ def main(config, process):
         train(config, num_words, embedding_matrix, train_data, valid_data)
     if process == 'test':
         test(config, num_words, embedding_matrix, test_data)
-    if process == 'eval':
-        evaluate(config)
+    if process == 'show':
+        show(config)
         
     return True
 
