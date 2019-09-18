@@ -79,14 +79,15 @@ Parameters for all processes below can be modified in `config.json`. If no file 
     - `python run.py --preprocess coherencevectors` to extract coherence vectors for all stories (has to be run after image features are extracted)
     - NOTE: The preprocessed zip file has coherence vectors, VIST processed data and VIST VGG16 image features, that was part of our paper.
 2. training
-    - `python run.py --pretrain` will pretrain stage 1 model on MS COCO dataset. 
-    - `python run.py --train stage1` will train stage 1 model on VIST dataset.  
-    - `python run.py --train cnsi` to train cnsi model stage 2 (uses trained stage 1 model)
-    - `python run.py --train nsi` to train nsi model stage 2 (uses trained stage 1 model)
-    - `python run.py --train baseline` to train baseline model (does not use any of the models from above)
+    - For Baseline
+      - `python run.py --train baseline` will train the baseline model on VIST dataset.
+    - For Proposed
+      - `python run.py --pretrain` will pretrain stage 1 model on MS COCO dataset. 
+      - `python run.py --train stage1` will train stage 1 model on VIST dataset.  
+      - `python run.py --train modeltype` (replace 'model type' with 'cnsi' or 'nsi' depending on the required model)
 3. prediction
     - `python run.py --eval modeltype` where modeltype can be 'cnsi', 'nsi', or 'baseline'.
-4. illustrate
+4. illustrate (not yet implemented)
     - `python run.py --show modeltype`, where modeltype can be 'cnsi', 'nsi', or 'baseline'.
 NOTE: skip step 1 and 2 and download trained models from this link to evaluate the proposed models.  
 
