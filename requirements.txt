@@ -46,7 +46,7 @@ numpy-base=1.16.4=py37hde5b4d6_0
 olefile=0.46=py37_0
 openssl=1.1.1=h7b6447c_0
 pandas=0.25.0=py37he6710b0_0
-pillow=6.1.0=py37h34e0f95_0
+pillow=6.2.0=py37h34e0f95_0
 pip=19.1.1=py37_0
 protobuf=3.8.0=py37he6710b0_0
 pycorenlp=0.3.0=pypi_0
